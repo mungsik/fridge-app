@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
@@ -6,73 +6,71 @@ import { FridgeItemForm } from '@/app/components/FridgeItemForm';
 import { FridgeItemCard } from '@/app/components/FridgeItemCard';
 import { NotificationBanner } from '@/app/components/NotificationBanner';
 import { FridgeItem } from '@/app/types/fridge';
-import { Plus, Search, Refrigerator } from 'lucide-react';
+import { Plus, Search, Refrigerator, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/app/components/ui/sonner';
-
-const STORAGE_KEY = 'fridge-items';
+import { useFridgeItems } from '@/app/hooks/useFridgeItems';
+import { Alert, AlertDescription } from '@/app/components/ui/alert';
 
 export default function App() {
-  const [items, setItems] = useState<FridgeItem[]>([]);
+  const {
+    items,
+    isLoading,
+    error,
+    refetch,
+    createItem,
+    updateItem,
+    deleteItem
+  } = useFridgeItems();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FridgeItem | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load items from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setItems(parsed);
-      } catch (error) {
-        console.error('Failed to load items:', error);
-      }
+  const handleCreate = async (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
+    try {
+      setIsSubmitting(true);
+      await createItem(itemData);
+      toast.success('식품이 등록되었습니다.');
+    } catch (err) {
+      toast.error('식품 등록에 실패했습니다.');
+      console.error('Create failed:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, []);
-
-  // Save items to localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
-
-  const handleCreate = (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
-    const newItem: FridgeItem = {
-      ...itemData,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setItems([...items, newItem]);
-    toast.success('식품이 등록되었습니다.');
   };
 
-  const handleEdit = (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
+  const handleEdit = async (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
     if (!editingItem) return;
-    
-    const updatedItems = items.map(item =>
-      item.id === editingItem.id
-        ? { ...item, ...itemData }
-        : item
-    );
-    setItems(updatedItems);
-    setEditingItem(null);
-    toast.success('식품이 수정되었습니다.');
+
+    try {
+      setIsSubmitting(true);
+      await updateItem(editingItem.id, itemData);
+      setEditingItem(null);
+      toast.success('식품이 수정되었습니다.');
+    } catch (err) {
+      toast.error('식품 수정에 실패했습니다.');
+      console.error('Update failed:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
-    toast.success('식품이 삭제되었습니다.');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteItem(id);
+      toast.success('식품이 삭제되었습니다.');
+    } catch (err) {
+      toast.error('식품 삭제에 실패했습니다.');
+      console.error('Delete failed:', err);
+    }
   };
 
   const openEditForm = (item: FridgeItem) => {
     setEditingItem(item);
     setIsFormOpen(true);
-  };
-
-  const closeForm = () => {
-    setIsFormOpen(false);
-    setEditingItem(null);
   };
 
   // Get unique categories
@@ -87,18 +85,56 @@ export default function App() {
     return matchesSearch && matchesCategory;
   });
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">데이터를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="ml-2">
+            <p className="font-medium mb-2">데이터를 불러오는데 실패했습니다</p>
+            <p className="text-sm mb-4">{error}</p>
+            <Button variant="outline" size="sm" onClick={refetch}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              다시 시도
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster />
-      
+
       {/* Header */}
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Refrigerator className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold">사내 냉장고 관리</h1>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Refrigerator className="h-8 w-8 text-blue-600" />
+                <h1 className="text-3xl font-bold">사내 냉장고 관리</h1>
+              </div>
+              <p className="text-gray-600">식품 등록하고 유통기한을 관리하세요</p>
+            </div>
+            <Button variant="ghost" size="icon" onClick={refetch} title="새로고침">
+              <RefreshCw className="h-5 w-5" />
+            </Button>
           </div>
-          <p className="text-gray-600">식품 등록하고 유통기한을 관리하세요</p>
         </div>
       </header>
 
@@ -120,7 +156,7 @@ export default function App() {
                 className="pl-10"
               />
             </div>
-            
+
             <Select value={filterCategory} onValueChange={setFilterCategory}>
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="카테고리 필터" />
@@ -217,6 +253,7 @@ export default function App() {
         onSubmit={editingItem ? handleEdit : handleCreate}
         initialData={editingItem || undefined}
         mode={editingItem ? 'edit' : 'create'}
+        isSubmitting={isSubmitting}
       />
     </div>
   );
