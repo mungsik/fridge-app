@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Camera, Keyboard, Loader2 } from 'lucide-react';
+
+const BARCODE_FORMATS = [
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.ITF,
+];
 
 interface BarcodeScannerProps {
   open: boolean;
@@ -52,14 +62,22 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
       }
 
       try {
-        const scanner = new Html5Qrcode(readerDivId);
+        const scanner = new Html5Qrcode(readerDivId, {
+          formatsToSupport: BARCODE_FORMATS,
+          verbose: false,
+        });
         scannerRef.current = scanner;
 
         await scanner.start(
           { facingMode: 'environment' },
           {
-            fps: 10,
-            qrbox: { width: 250, height: 150 },
+            fps: 15,
+            qrbox: (viewfinderWidth, viewfinderHeight) => ({
+              width: Math.floor(viewfinderWidth * 0.85),
+              height: Math.floor(viewfinderHeight * 0.4),
+            }),
+            aspectRatio: 1.0,
+            disableFlip: false,
           },
           (decodedText) => {
             onScan(decodedText);
