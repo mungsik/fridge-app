@@ -3,7 +3,7 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
-import { Camera, Keyboard, Loader2 } from 'lucide-react';
+import { Camera, ImagePlus, Keyboard, Loader2 } from 'lucide-react';
 
 const BARCODE_FORMATS = [
   Html5QrcodeSupportedFormats.EAN_13,
@@ -22,12 +22,14 @@ interface BarcodeScannerProps {
 }
 
 export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerProps) {
-  const [mode, setMode] = useState<'camera' | 'manual'>('camera');
+  const [mode, setMode] = useState<'camera' | 'photo' | 'manual'>('camera');
   const [manualCode, setManualCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const isRunningRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const readerDivId = 'barcode-reader';
 
   const stopScanner = useCallback(async () => {
@@ -36,13 +38,14 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
       try {
         await scanner.stop();
       } catch {
-        // Already stopped or never started
+        // Already stopped
       }
       isRunningRef.current = false;
     }
     scannerRef.current = null;
   }, []);
 
+  // Live camera scanning
   useEffect(() => {
     if (!open || mode !== 'camera') return;
 
@@ -52,7 +55,6 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
       setIsStarting(true);
       setError(null);
 
-      // Wait for DOM element to be ready
       await new Promise(resolve => setTimeout(resolve, 150));
 
       const el = document.getElementById(readerDivId);
@@ -65,28 +67,44 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
         const scanner = new Html5Qrcode(readerDivId, {
           formatsToSupport: BARCODE_FORMATS,
           verbose: false,
+          useBarCodeDetectorIfSupported: true,
         });
         scannerRef.current = scanner;
 
         await scanner.start(
-          { facingMode: 'environment' },
+          { facingMode: { exact: 'environment' } },
           {
-            fps: 15,
+            fps: 20,
             qrbox: (viewfinderWidth, viewfinderHeight) => ({
-              width: Math.floor(viewfinderWidth * 0.85),
-              height: Math.floor(viewfinderHeight * 0.4),
+              width: Math.floor(viewfinderWidth * 0.9),
+              height: Math.floor(viewfinderHeight * 0.5),
             }),
-            aspectRatio: 1.0,
             disableFlip: false,
+            videoConstraints: {
+              facingMode: { exact: 'environment' },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
           },
           (decodedText) => {
             onScan(decodedText);
             onOpenChange(false);
           },
-          () => {
-            // Ignore scan failures (happens every frame without a barcode)
-          }
+          () => {}
         );
+
+        // Try to enable torch/autofocus if available
+        try {
+          const track = scanner.getRunningTrackSettings();
+          if (track) {
+            const capabilities = scanner.getRunningTrackCameraCapabilities();
+            if (capabilities?.focusModeFeature()?.isSupported()) {
+              capabilities.focusModeFeature().apply('continuous');
+            }
+          }
+        } catch {
+          // Not all devices support these features
+        }
 
         isRunningRef.current = true;
 
@@ -96,7 +114,7 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
       } catch (err) {
         if (!cancelled) {
           console.warn('Camera not available:', err);
-          setError('카메라에 접근할 수 없습니다. 수동 입력을 사용하세요.');
+          setError('카메라에 접근할 수 없습니다.');
         }
         scannerRef.current = null;
       } finally {
@@ -120,8 +138,36 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
       setManualCode('');
       setMode('camera');
       setIsStarting(false);
+      setIsScanning(false);
     }
   }, [open, stopScanner]);
+
+  // Photo scan
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    setError(null);
+
+    try {
+      const scanner = new Html5Qrcode('photo-scanner-temp', {
+        formatsToSupport: BARCODE_FORMATS,
+        verbose: false,
+        useBarCodeDetectorIfSupported: true,
+      });
+
+      const result = await scanner.scanFileV2(file, true);
+      onScan(result.decodedText);
+      onOpenChange(false);
+    } catch {
+      setError('바코드를 인식할 수 없습니다. 다시 촬영해주세요.');
+    } finally {
+      setIsScanning(false);
+      // Reset file input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,28 +186,37 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
         </DialogHeader>
 
         {/* Mode toggle */}
-        <div className="flex gap-2 mb-3">
+        <div className="flex gap-1 mb-3">
           <Button
             variant={mode === 'camera' ? 'default' : 'outline'}
             size="sm"
             className="flex-1"
-            onClick={() => setMode('camera')}
+            onClick={() => { stopScanner(); setError(null); setMode('camera'); }}
           >
             <Camera className="h-4 w-4 mr-1" />
-            카메라
+            실시간
+          </Button>
+          <Button
+            variant={mode === 'photo' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1"
+            onClick={() => { stopScanner(); setError(null); setMode('photo'); }}
+          >
+            <ImagePlus className="h-4 w-4 mr-1" />
+            사진
           </Button>
           <Button
             variant={mode === 'manual' ? 'default' : 'outline'}
             size="sm"
             className="flex-1"
-            onClick={() => { stopScanner(); setMode('manual'); }}
+            onClick={() => { stopScanner(); setError(null); setMode('manual'); }}
           >
             <Keyboard className="h-4 w-4 mr-1" />
             직접 입력
           </Button>
         </div>
 
-        {mode === 'camera' ? (
+        {mode === 'camera' && (
           <div>
             {isStarting && (
               <div className="flex items-center justify-center py-8">
@@ -172,18 +227,65 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
             <div
               id={readerDivId}
               className="w-full rounded-lg overflow-hidden"
-              style={{ minHeight: isStarting ? 0 : 250 }}
+              style={{ minHeight: isStarting ? 0 : 280 }}
             />
             {error && (
-              <p className="text-sm text-red-500 mt-2">{error}</p>
+              <p className="text-sm text-red-500 mt-2 text-center">{error}</p>
             )}
             {!error && !isStarting && (
               <p className="text-xs text-gray-400 text-center mt-2">
-                바코드를 카메라에 비추세요
+                바코드를 스캔 영역 안에 맞추세요
               </p>
             )}
           </div>
-        ) : (
+        )}
+
+        {mode === 'photo' && (
+          <div className="space-y-3">
+            {/* Hidden temp div for scanner */}
+            <div id="photo-scanner-temp" style={{ display: 'none' }} />
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            <div className="text-center py-4">
+              <Button
+                type="button"
+                size="lg"
+                className="w-full h-20 text-base"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isScanning}
+              >
+                {isScanning ? (
+                  <>
+                    <Loader2 className="h-6 w-6 mr-2 animate-spin" />
+                    인식 중...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-6 w-6 mr-2" />
+                    바코드 촬영하기
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-gray-400 mt-2">
+                카메라로 바코드를 촬영하면 자동으로 인식합니다
+              </p>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-500 text-center">{error}</p>
+            )}
+          </div>
+        )}
+
+        {mode === 'manual' && (
           <form onSubmit={handleManualSubmit} className="space-y-3">
             <Input
               placeholder="바코드 번호 입력 (예: 8801234567890)"
