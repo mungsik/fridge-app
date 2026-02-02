@@ -44,8 +44,10 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
   const detectorRef = useRef<BarcodeDetector | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const scannedRef = useRef(false);
+  const html5ScannerRef = useRef<unknown>(null);
+  const html5RunningRef = useRef(false);
 
-  const stopCamera = useCallback(() => {
+  const stopCamera = useCallback(async () => {
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = 0;
@@ -57,6 +59,14 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    // Stop html5-qrcode fallback if running
+    if (html5ScannerRef.current && html5RunningRef.current) {
+      try {
+        await (html5ScannerRef.current as { stop: () => Promise<void> }).stop();
+      } catch { /* already stopped */ }
+      html5RunningRef.current = false;
+    }
+    html5ScannerRef.current = null;
   }, []);
 
   // Live camera mode with native BarcodeDetector
@@ -66,78 +76,114 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
     let cancelled = false;
     scannedRef.current = false;
 
+    const startNativeScanner = async () => {
+      detectorRef.current = new BarcodeDetector({ formats: BARCODE_FORMATS });
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      });
+
+      if (cancelled) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+
+      streamRef.current = stream;
+
+      const track = stream.getVideoTracks()[0];
+      try {
+        const capabilities = track.getCapabilities?.();
+        if (capabilities?.focusMode?.includes('continuous')) {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] });
+        }
+      } catch { /* not supported */ }
+
+      const video = videoRef.current;
+      if (!video || cancelled) return;
+
+      video.srcObject = stream;
+      await video.play();
+
+      setIsStarting(false);
+      setSupported(true);
+
+      const scanFrame = async () => {
+        if (cancelled || scannedRef.current || !detectorRef.current || !video) return;
+        try {
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            const results = await detectorRef.current.detect(video);
+            if (results.length > 0 && !scannedRef.current) {
+              scannedRef.current = true;
+              onScan(results[0].rawValue);
+              onOpenChange(false);
+              return;
+            }
+          }
+        } catch { /* continue */ }
+        animFrameRef.current = requestAnimationFrame(scanFrame);
+      };
+
+      animFrameRef.current = requestAnimationFrame(scanFrame);
+    };
+
+    const startHtml5Fallback = async () => {
+      // Wait for DOM
+      await new Promise(r => setTimeout(r, 150));
+      const el = document.getElementById('html5-fallback-reader');
+      if (!el || cancelled) { setIsStarting(false); return; }
+
+      const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
+      const scanner = new Html5Qrcode('html5-fallback-reader', {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.ITF,
+        ],
+        verbose: false,
+      });
+      html5ScannerRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        {
+          fps: 15,
+          qrbox: (w: number, h: number) => ({
+            width: Math.floor(w * 0.9),
+            height: Math.floor(h * 0.45),
+          }),
+          aspectRatio: 1.0,
+        },
+        (decodedText: string) => {
+          onScan(decodedText);
+          onOpenChange(false);
+        },
+        () => {}
+      );
+
+      html5RunningRef.current = true;
+      setIsStarting(false);
+      setSupported(false); // marks as fallback mode
+    };
+
     const startCamera = async () => {
       setIsStarting(true);
       setError(null);
 
-      if (!hasBarcodeDetector()) {
-        setSupported(false);
-        setError('이 브라우저는 바코드 인식을 지원하지 않습니다. 사진 또는 직접 입력을 사용하세요.');
-        setIsStarting(false);
-        return;
-      }
-
       try {
-        detectorRef.current = new BarcodeDetector({ formats: BARCODE_FORMATS });
-
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-          },
-          audio: false,
-        });
-
-        if (cancelled) {
-          stream.getTracks().forEach(t => t.stop());
-          return;
+        if (hasBarcodeDetector()) {
+          await startNativeScanner();
+        } else {
+          await startHtml5Fallback();
         }
-
-        streamRef.current = stream;
-
-        // Enable continuous autofocus
-        const track = stream.getVideoTracks()[0];
-        try {
-          const capabilities = track.getCapabilities?.();
-          if (capabilities?.focusMode?.includes('continuous')) {
-            await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] });
-          }
-        } catch {
-          // Not all devices support focusMode
-        }
-
-        const video = videoRef.current;
-        if (!video || cancelled) return;
-
-        video.srcObject = stream;
-        await video.play();
-
-        setIsStarting(false);
-
-        // Scan loop
-        const scanFrame = async () => {
-          if (cancelled || scannedRef.current || !detectorRef.current || !video) return;
-
-          try {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-              const results = await detectorRef.current.detect(video);
-              if (results.length > 0 && !scannedRef.current) {
-                scannedRef.current = true;
-                const code = results[0].rawValue;
-                onScan(code);
-                onOpenChange(false);
-                return;
-              }
-            }
-          } catch {
-            // Detection failed for this frame, continue
-          }
-
-          animFrameRef.current = requestAnimationFrame(scanFrame);
-        };
-
-        animFrameRef.current = requestAnimationFrame(scanFrame);
       } catch (err) {
         if (!cancelled) {
           console.warn('Camera error:', err);
@@ -265,7 +311,8 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
                 <span className="text-sm text-gray-500">카메라 시작 중...</span>
               </div>
             )}
-            <div className="relative rounded-lg overflow-hidden bg-black" style={{ minHeight: isStarting ? 0 : 300 }}>
+            {/* Native BarcodeDetector mode */}
+            <div className="relative rounded-lg overflow-hidden bg-black" style={{ minHeight: isStarting ? 0 : 300, display: supported ? 'block' : 'none' }}>
               <video
                 ref={videoRef}
                 className="w-full h-full object-cover"
@@ -275,7 +322,7 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
                 style={{ display: isStarting ? 'none' : 'block' }}
               />
               {/* Scan guide overlay */}
-              {!isStarting && !error && (
+              {!isStarting && !error && supported && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div
                     className="border-2 border-green-400 rounded-md"
@@ -293,7 +340,12 @@ export function BarcodeScanner({ open, onOpenChange, onScan }: BarcodeScannerPro
                 </div>
               )}
             </div>
-            {/* Hidden canvas for capture */}
+            {/* html5-qrcode fallback mode */}
+            <div
+              id="html5-fallback-reader"
+              className="w-full rounded-lg overflow-hidden"
+              style={{ minHeight: !supported && !isStarting ? 300 : 0, display: !supported ? 'block' : 'none' }}
+            />
             <canvas ref={canvasRef} className="hidden" />
 
             {error && (
