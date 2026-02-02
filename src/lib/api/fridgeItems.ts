@@ -3,7 +3,7 @@ import type { FridgeItem } from '@/app/types/fridge';
 import type { DbFridgeItem } from '../database.types';
 
 // Transform database row to frontend interface
-function toFridgeItem(row: DbFridgeItem): FridgeItem {
+function toFridgeItem(row: DbFridgeItem, ownerName?: string): FridgeItem {
   return {
     id: row.id,
     name: row.name,
@@ -11,23 +11,45 @@ function toFridgeItem(row: DbFridgeItem): FridgeItem {
     expiryDate: row.expiry_date,
     category: row.category,
     location: row.location,
+    userId: row.user_id,
+    ownerName,
     createdAt: row.created_at,
   };
 }
 
 // Transform frontend interface to database format
-function toDbFormat(item: Omit<FridgeItem, 'id' | 'createdAt'>) {
+function toDbFormat(item: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>, userId: string) {
   return {
     name: item.name,
     quantity: item.quantity,
     expiry_date: item.expiryDate,
     category: item.category || '',
     location: item.location || '',
+    user_id: userId,
   };
 }
 
+// Fetch usernames from profiles table for a set of user IDs
+async function fetchOwnerNames(userIds: string[]): Promise<Map<string, string>> {
+  const uniqueIds = [...new Set(userIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return new Map();
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', uniqueIds);
+
+  const map = new Map<string, string>();
+  if (data) {
+    for (const profile of data) {
+      map.set(profile.id, profile.username);
+    }
+  }
+  return map;
+}
+
 export const fridgeItemsApi = {
-  // Fetch all items
+  // Fetch items - RLS handles filtering (admin sees all, user sees own)
   async getAll(): Promise<FridgeItem[]> {
     const { data, error } = await supabase
       .from('fridge_items')
@@ -38,38 +60,51 @@ export const fridgeItemsApi = {
       throw new Error(`Failed to fetch items: ${error.message}`);
     }
 
-    return (data || []).map(toFridgeItem);
+    const rows = data || [];
+    const ownerNames = await fetchOwnerNames(rows.map(r => r.user_id));
+    return rows.map(row => toFridgeItem(row, ownerNames.get(row.user_id)));
   },
 
   // Create new item
-  async create(item: Omit<FridgeItem, 'id' | 'createdAt'>): Promise<FridgeItem> {
+  async create(item: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>): Promise<FridgeItem> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
     const { data, error } = await supabase
       .from('fridge_items')
-      .insert(toDbFormat(item))
-      .select()
+      .insert(toDbFormat(item, user.id))
+      .select('*')
       .single();
 
     if (error) {
       throw new Error(`Failed to create item: ${error.message}`);
     }
 
-    return toFridgeItem(data);
+    const ownerNames = await fetchOwnerNames([data.user_id]);
+    return toFridgeItem(data, ownerNames.get(data.user_id));
   },
 
   // Update existing item
-  async update(id: string, item: Omit<FridgeItem, 'id' | 'createdAt'>): Promise<FridgeItem> {
+  async update(id: string, item: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>): Promise<FridgeItem> {
     const { data, error } = await supabase
       .from('fridge_items')
-      .update(toDbFormat(item))
+      .update({
+        name: item.name,
+        quantity: item.quantity,
+        expiry_date: item.expiryDate,
+        category: item.category || '',
+        location: item.location || '',
+      })
       .eq('id', id)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
       throw new Error(`Failed to update item: ${error.message}`);
     }
 
-    return toFridgeItem(data);
+    const ownerNames = await fetchOwnerNames([data.user_id]);
+    return toFridgeItem(data, ownerNames.get(data.user_id));
   },
 
   // Delete item

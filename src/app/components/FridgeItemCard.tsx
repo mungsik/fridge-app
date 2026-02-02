@@ -9,9 +9,10 @@ interface FridgeItemCardProps {
   item: FridgeItem;
   onEdit: (item: FridgeItem) => void;
   onDelete: (id: string) => void;
+  isAdmin?: boolean;
 }
 
-export function FridgeItemCard({ item, onEdit, onDelete }: FridgeItemCardProps) {
+export function FridgeItemCard({ item, onEdit, onDelete, isAdmin }: FridgeItemCardProps) {
   const getExpiryStatus = (): NotificationStatus => {
     const today = new Date();
     const expiry = new Date(item.expiryDate);
@@ -62,6 +63,9 @@ export function FridgeItemCard({ item, onEdit, onDelete }: FridgeItemCardProps) 
         </div>
 
         <div className="space-y-1 mb-4 text-sm text-gray-600">
+          {isAdmin && item.ownerName && (
+            <p className="font-medium text-blue-600">등록자: {item.ownerName}</p>
+          )}
           <p>유통기한: {item.expiryDate}</p>
           {item.category && <p>카테고리: {item.category}</p>}
           {item.location && <p>위치: {item.location}</p>}

@@ -5,6 +5,8 @@ export interface FridgeItem {
   expiryDate: string;
   category: string;
   location: string;
+  userId: string;
+  ownerName?: string;
   createdAt: string;
 }
 

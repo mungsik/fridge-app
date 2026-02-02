@@ -5,14 +5,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FridgeItemForm } from '@/app/components/FridgeItemForm';
 import { FridgeItemCard } from '@/app/components/FridgeItemCard';
 import { NotificationBanner } from '@/app/components/NotificationBanner';
+import { AuthForm } from '@/app/components/AuthForm';
+import { useAuth } from '@/app/contexts/AuthContext';
 import { FridgeItem } from '@/app/types/fridge';
-import { Plus, Search, Refrigerator, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, Search, Refrigerator, Loader2, RefreshCw, AlertCircle, LogOut, LayoutGrid } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/app/components/ui/sonner';
 import { useFridgeItems } from '@/app/hooks/useFridgeItems';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
+import { FridgeView } from '@/app/components/fridge-view/FridgeView';
 
 export default function App() {
+  const { user, isLoading: authLoading, signOut, isAdmin, username } = useAuth();
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Toaster />
+        <AuthForm />
+      </>
+    );
+  }
+
+  return <MainApp username={username ?? '게스트'} signOut={signOut} isAdmin={isAdmin} />;
+}
+
+function MainApp({ username, signOut, isAdmin }: { username: string | null; signOut: () => Promise<void>; isAdmin: boolean }) {
   const {
     items,
     isLoading,
@@ -28,8 +58,9 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<FridgeItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'fridge'>('fridge');
 
-  const handleCreate = async (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
+  const handleCreate = async (itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
     try {
       setIsSubmitting(true);
       await createItem(itemData);
@@ -42,7 +73,7 @@ export default function App() {
     }
   };
 
-  const handleEdit = async (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
+  const handleEdit = async (itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
     if (!editingItem) return;
 
     try {
@@ -71,6 +102,21 @@ export default function App() {
   const openEditForm = (item: FridgeItem) => {
     setEditingItem(item);
     setIsFormOpen(true);
+  };
+
+  const handleUpdateLocation = async (item: FridgeItem, newLocation: string) => {
+    try {
+      await updateItem(item.id, {
+        name: item.name,
+        quantity: item.quantity,
+        expiryDate: item.expiryDate,
+        category: item.category,
+        location: newLocation,
+      });
+    } catch (err) {
+      toast.error('위치 변경에 실패했습니다.');
+      console.error('Location update failed:', err);
+    }
   };
 
   // Get unique categories
@@ -126,14 +172,19 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <Refrigerator className="h-8 w-8 text-blue-600" />
-                <h1 className="text-3xl font-bold">사내 냉장고 관리</h1>
+                <h1 className="text-3xl font-bold">냉장고를 부탁해</h1>
               </div>
               <p className="text-gray-600">식품 등록하고 유통기한을 관리하세요</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={refetch} title="새로고침">
-              <RefreshCw className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {isAdmin
+                ? <span className="text-xs font-medium text-white bg-red-500 rounded px-2 py-0.5">관리자</span>
+                : <span className="text-sm text-gray-600 hidden sm:block">{username}</span>
+              }
+              <Button variant="ghost" size="icon" onClick={signOut} title="로그아웃">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -171,6 +222,25 @@ export default function App() {
               </SelectContent>
             </Select>
 
+            <div className="flex gap-1 border rounded-lg p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                title="카드 뷰"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'fridge' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('fridge')}
+                title="냉장고 뷰"
+              >
+                <Refrigerator className="h-4 w-4" />
+              </Button>
+            </div>
+
             <Button onClick={() => setIsFormOpen(true)} className="w-full md:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               새 식품 등록
@@ -178,8 +248,16 @@ export default function App() {
           </div>
         </div>
 
-        {/* Items Grid */}
-        {filteredItems.length === 0 ? (
+        {/* Content */}
+        {viewMode === 'fridge' ? (
+          <FridgeView
+            items={filteredItems}
+            onEdit={openEditForm}
+            onDelete={handleDelete}
+            onUpdateLocation={handleUpdateLocation}
+            isAdmin={isAdmin}
+          />
+        ) : filteredItems.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
             <Refrigerator className="h-16 w-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">
@@ -203,6 +281,7 @@ export default function App() {
                 item={item}
                 onEdit={openEditForm}
                 onDelete={handleDelete}
+                isAdmin={isAdmin}
               />
             ))}
           </div>

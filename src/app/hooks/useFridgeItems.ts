@@ -7,8 +7,8 @@ interface UseFridgeItemsResult {
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  createItem: (item: Omit<FridgeItem, 'id' | 'createdAt'>) => Promise<FridgeItem>;
-  updateItem: (id: string, item: Omit<FridgeItem, 'id' | 'createdAt'>) => Promise<FridgeItem>;
+  createItem: (item: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => Promise<FridgeItem>;
+  updateItem: (id: string, item: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => Promise<FridgeItem>;
   deleteItem: (id: string) => Promise<void>;
 }
 
@@ -36,13 +36,13 @@ export function useFridgeItems(): UseFridgeItemsResult {
     fetchItems();
   }, [fetchItems]);
 
-  const createItem = useCallback(async (itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
+  const createItem = useCallback(async (itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
     const newItem = await fridgeItemsApi.create(itemData);
     setItems(prev => [newItem, ...prev]);
     return newItem;
   }, []);
 
-  const updateItem = useCallback(async (id: string, itemData: Omit<FridgeItem, 'id' | 'createdAt'>) => {
+  const updateItem = useCallback(async (id: string, itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
     const updatedItem = await fridgeItemsApi.update(id, itemData);
     setItems(prev => prev.map(item =>
       item.id === id ? updatedItem : item
