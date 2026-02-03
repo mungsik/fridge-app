@@ -1,7 +1,5 @@
-import { schedule } from '@netlify/functions';
+import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-
-// ─── Types ───────────────────────────────────────────────────────
 
 interface FridgeItemRow {
   id: string;
@@ -25,8 +23,6 @@ interface AlertItem {
   ownerName: string;
 }
 
-// ─── Core logic ──────────────────────────────────────────────────
-
 async function checkAndNotify(): Promise<string> {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -43,10 +39,8 @@ async function checkAndNotify(): Promise<string> {
     return `Missing env vars: ${missing.join(', ')}`;
   }
 
-  // Supabase client with service_role key (bypasses RLS)
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Fetch all fridge items
   const { data: items, error: itemsError } = await supabase
     .from('fridge_items')
     .select('id, name, quantity, expiry_date, category, location, user_id');
@@ -59,7 +53,6 @@ async function checkAndNotify(): Promise<string> {
     return 'No items in fridge';
   }
 
-  // Calculate days until expiry
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
@@ -71,7 +64,6 @@ async function checkAndNotify(): Promise<string> {
     userIds.add(item.user_id);
   }
 
-  // Fetch owner names
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, username')
@@ -84,7 +76,6 @@ async function checkAndNotify(): Promise<string> {
     }
   }
 
-  // Categorize items
   for (const item of items as FridgeItemRow[]) {
     const expiryDate = new Date(item.expiry_date);
     expiryDate.setHours(0, 0, 0, 0);
@@ -98,12 +89,10 @@ async function checkAndNotify(): Promise<string> {
     }
   }
 
-  // Nothing to report
   if (expired.length === 0 && expiring.length === 0) {
     return 'No expired or expiring items';
   }
 
-  // Build message
   const lines: string[] = ['🧊 <b>냉장고 알림</b>', ''];
 
   if (expired.length > 0) {
@@ -127,7 +116,6 @@ async function checkAndNotify(): Promise<string> {
 
   const message = lines.join('\n');
 
-  // Send via Telegram Bot API
   const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
   const res = await fetch(telegramUrl, {
     method: 'POST',
@@ -147,17 +135,7 @@ async function checkAndNotify(): Promise<string> {
   return `Sent alert: ${expired.length} expired, ${expiring.length} expiring`;
 }
 
-// ─── Scheduled handler (매일 UTC 00:00 = KST 09:00) ─────────────
-
-export const handler = schedule('0 0 * * *', async () => {
+export const handler: Handler = async () => {
   const result = await checkAndNotify();
-  console.log(result);
   return { statusCode: 200, body: result };
-});
-
-// ─── HTTP handler (수동 테스트용: GET /.netlify/functions/telegram-notify) ──
-
-export default async () => {
-  const result = await checkAndNotify();
-  return new Response(result, { status: 200 });
 };
