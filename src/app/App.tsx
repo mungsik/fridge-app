@@ -8,12 +8,13 @@ import { NotificationBanner } from '@/app/components/NotificationBanner';
 import { AuthForm } from '@/app/components/AuthForm';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { FridgeItem } from '@/app/types/fridge';
-import { Plus, Search, Refrigerator, Loader2, RefreshCw, AlertCircle, LogOut, LayoutGrid } from 'lucide-react';
+import { Plus, Search, Refrigerator, Loader2, RefreshCw, AlertCircle, LogOut, LayoutGrid, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/app/components/ui/sonner';
 import { useFridgeItems } from '@/app/hooks/useFridgeItems';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { FridgeView } from '@/app/components/fridge-view/FridgeView';
+import { TelegramLinkDialog } from '@/app/components/TelegramLinkDialog';
 
 export default function App() {
   const { user, isLoading: authLoading, signOut, isAdmin, username } = useAuth();
@@ -43,6 +44,7 @@ export default function App() {
 }
 
 function MainApp({ username, signOut, isAdmin }: { username: string | null; signOut: () => Promise<void>; isAdmin: boolean }) {
+  const { telegramChatId } = useAuth();
   const {
     items,
     isLoading,
@@ -59,6 +61,7 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   const [editingItem, setEditingItem] = useState<FridgeItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'fridge'>('fridge');
+  const [isTelegramDialogOpen, setIsTelegramDialogOpen] = useState(false);
 
   const handleCreate = async (itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
     try {
@@ -177,6 +180,15 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
               <p className="text-gray-600">식품 등록하고 유통기한을 관리하세요</p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant={telegramChatId ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setIsTelegramDialogOpen(true)}
+                title="텔레그램 알림 연동"
+              >
+                <MessageCircle className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">{telegramChatId ? '연동됨' : '텔레그램'}</span>
+              </Button>
               {isAdmin
                 ? <span className="text-xs font-medium text-white bg-red-500 rounded px-2 py-0.5">관리자</span>
                 : <span className="text-sm text-gray-600 hidden sm:block">{username}</span>
@@ -333,6 +345,12 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
         initialData={editingItem || undefined}
         mode={editingItem ? 'edit' : 'create'}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Telegram Link Dialog */}
+      <TelegramLinkDialog
+        open={isTelegramDialogOpen}
+        onOpenChange={setIsTelegramDialogOpen}
       />
     </div>
   );

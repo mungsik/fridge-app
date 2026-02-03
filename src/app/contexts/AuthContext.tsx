@@ -8,9 +8,11 @@ interface AuthContextType {
   isLoading: boolean;
   isAdmin: boolean;
   username: string | null;
+  telegramChatId: string | null;
   signUp: (email: string, password: string, username: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,7 +21,7 @@ async function fetchProfile(userId: string) {
   try {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role, username')
+      .select('role, username, telegram_chat_id')
       .eq('id', userId)
       .maybeSingle();
 
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [telegramChatId, setTelegramChatId] = useState<string | null>(null);
 
   const loadProfile = async (userId: string) => {
     try {
@@ -46,9 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (profile) {
         setIsAdmin(profile.role === 'admin');
         setUsername(profile.username);
+        setTelegramChatId(profile.telegram_chat_id ?? null);
       }
     } catch {
       // profiles table may not exist yet
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (user) {
+      await loadProfile(user.id);
     }
   };
 
@@ -121,11 +131,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setIsAdmin(false);
     setUsername(null);
+    setTelegramChatId(null);
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, isAdmin, username, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, isLoading, isAdmin, username, telegramChatId, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

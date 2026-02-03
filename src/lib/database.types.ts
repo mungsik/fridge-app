@@ -40,16 +40,25 @@ export interface Database {
           username: string;
           role: 'admin' | 'user';
           created_at: string;
+          telegram_chat_id: string | null;
+          telegram_link_code: string | null;
+          telegram_linked_at: string | null;
         };
         Insert: {
           id: string;
           username: string;
           role?: 'admin' | 'user';
           created_at?: string;
+          telegram_chat_id?: string | null;
+          telegram_link_code?: string | null;
+          telegram_linked_at?: string | null;
         };
         Update: {
           username?: string;
           role?: 'admin' | 'user';
+          telegram_chat_id?: string | null;
+          telegram_link_code?: string | null;
+          telegram_linked_at?: string | null;
         };
       };
     };
