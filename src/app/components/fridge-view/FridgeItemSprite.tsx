@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import { motion } from 'motion/react';
 import { FridgeItem } from '@/app/types/fridge';
 import { DND_TYPES } from './fridgeConstants';
 import { PixelFoodIcon } from './PixelFoodIcon';
+import { getItemImageUrl } from '@/app/utils/itemImage';
 import { differenceInDays } from 'date-fns';
 
 interface FridgeItemSpriteProps {
@@ -19,6 +21,12 @@ function getExpiryStatus(expiryDate: string) {
 }
 
 export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSpriteProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    getItemImageUrl(item.name, item.category).then(setImageUrl);
+  }, [item.name, item.category]);
+
   const [{ isDragging }, drag] = useDrag({
     type: DND_TYPES.FRIDGE_ITEM,
     item: { type: DND_TYPES.FRIDGE_ITEM, id: item.id, sourceZone },
@@ -71,7 +79,7 @@ export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSprite
         />
       )}
 
-      {/* Pixel art icon */}
+      {/* Food icon */}
       <div
         className="rounded"
         style={{
@@ -82,7 +90,11 @@ export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSprite
             'none',
         }}
       >
-        <PixelFoodIcon name={item.name} category={item.category} size={36} />
+        {imageUrl && imageUrl !== '/images/items/default.svg' ? (
+          <img src={imageUrl} alt={item.name} width={36} height={36} className="rounded object-cover" />
+        ) : (
+          <PixelFoodIcon name={item.name} category={item.category} size={36} />
+        )}
       </div>
 
       {/* Item name */}

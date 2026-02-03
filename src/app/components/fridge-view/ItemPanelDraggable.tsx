@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import { FridgeItem } from '@/app/types/fridge';
 import { DND_TYPES } from './fridgeConstants';
 import { PixelFoodIcon } from './PixelFoodIcon';
+import { getItemImageUrl } from '@/app/utils/itemImage';
 import { differenceInDays } from 'date-fns';
 
 interface ItemPanelDraggableProps {
@@ -9,6 +11,12 @@ interface ItemPanelDraggableProps {
 }
 
 export function ItemPanelDraggable({ item }: ItemPanelDraggableProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    getItemImageUrl(item.name, item.category).then(setImageUrl);
+  }, [item.name, item.category]);
+
   const [{ isDragging }, drag] = useDrag({
     type: DND_TYPES.FRIDGE_ITEM,
     item: { type: DND_TYPES.FRIDGE_ITEM, id: item.id, sourceZone: null },
@@ -32,7 +40,11 @@ export function ItemPanelDraggable({ item }: ItemPanelDraggableProps) {
         hover:border-blue-300 hover:shadow-sm
       `}
     >
-      <PixelFoodIcon name={item.name} category={item.category} size={28} />
+      {imageUrl && imageUrl !== '/images/items/default.svg' ? (
+        <img src={imageUrl} alt={item.name} width={28} height={28} className="rounded object-cover" />
+      ) : (
+        <PixelFoodIcon name={item.name} category={item.category} size={28} />
+      )}
       <div className="flex-1 min-w-0">
         <div className="font-medium text-sm truncate">{item.name}</div>
         <div className="text-xs text-gray-500">

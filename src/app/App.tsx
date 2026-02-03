@@ -248,6 +248,40 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
           </div>
         </div>
 
+        {/* Stats */}
+        {items.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{items.length}</p>
+                <p className="text-sm text-gray-600">전체 식품</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-red-600">
+                  {items.filter(item => {
+                    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return diff < 0;
+                  }).length}
+                </p>
+                <p className="text-sm text-gray-600">유통기한 만료</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-orange-600">
+                  {items.filter(item => {
+                    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return diff >= 0 && diff <= 3;
+                  }).length}
+                </p>
+                <p className="text-sm text-gray-600">곧 만료</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">{categories.length}</p>
+                <p className="text-sm text-gray-600">카테고리</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         {viewMode === 'fridge' ? (
           <FridgeView
@@ -284,40 +318,6 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
                 isAdmin={isAdmin}
               />
             ))}
-          </div>
-        )}
-
-        {/* Stats */}
-        {items.length > 0 && (
-          <div className="mt-8 bg-white rounded-lg shadow-sm p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-blue-600">{items.length}</p>
-                <p className="text-sm text-gray-600">전체 식품</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">
-                  {items.filter(item => {
-                    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return diff < 0;
-                  }).length}
-                </p>
-                <p className="text-sm text-gray-600">유통기한 만료</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-orange-600">
-                  {items.filter(item => {
-                    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return diff >= 0 && diff <= 3;
-                  }).length}
-                </p>
-                <p className="text-sm text-gray-600">곧 만료</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">{categories.length}</p>
-                <p className="text-sm text-gray-600">카테고리</p>
-              </div>
-            </div>
           </div>
         )}
       </main>

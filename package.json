@@ -40,7 +40,6 @@
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
     "@supabase/supabase-js": "^2.93.2",
-    "barcode-detector": "^3.0.8",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
@@ -66,10 +65,13 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "@netlify/functions": "^5.1.2",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "vite-plugin-pwa": "^1.2.0"
   },
   "peerDependencies": {
     "react": "18.3.1",

@@ -2,19 +2,19 @@ import { useDrop } from 'react-dnd';
 import { FridgeItem } from '@/app/types/fridge';
 import { DND_TYPES, DragItem } from './fridgeConstants';
 import { ItemPanelDraggable } from './ItemPanelDraggable';
-import { Package, Trash2 } from 'lucide-react';
+import { Package, Undo2 } from 'lucide-react';
 
 interface ItemPanelProps {
   items: FridgeItem[];
-  onDeleteById?: (id: string) => void;
+  onUnplace?: (id: string) => void;
 }
 
-export function ItemPanel({ items, onDeleteById }: ItemPanelProps) {
+export function ItemPanel({ items, onUnplace }: ItemPanelProps) {
   const [{ isOver }, drop] = useDrop({
     accept: DND_TYPES.FRIDGE_ITEM,
     drop: (dragItem: DragItem) => {
-      if (dragItem.sourceZone && onDeleteById) {
-        onDeleteById(dragItem.id);
+      if (dragItem.sourceZone && onUnplace) {
+        onUnplace(dragItem.id);
       }
     },
     canDrop: (dragItem: DragItem) => !!dragItem.sourceZone,
@@ -28,8 +28,8 @@ export function ItemPanel({ items, onDeleteById }: ItemPanelProps) {
       ref={drop as unknown as React.Ref<HTMLDivElement>}
       className="rounded-lg border-2 shadow-sm p-3 w-[200px] transition-colors"
       style={{
-        background: isOver ? '#FEE2E2' : 'white',
-        borderColor: isOver ? '#EF4444' : '#E5E7EB',
+        background: isOver ? '#DBEAFE' : 'white',
+        borderColor: isOver ? '#3B82F6' : '#E5E7EB',
       }}
     >
       <div className="flex items-center gap-2 mb-3 pb-2 border-b">
@@ -41,9 +41,9 @@ export function ItemPanel({ items, onDeleteById }: ItemPanelProps) {
       </div>
 
       {isOver ? (
-        <div className="text-center py-6 text-red-400">
-          <Trash2 className="h-8 w-8 mx-auto mb-2" />
-          <p className="text-xs font-bold">여기에 놓으면 삭제</p>
+        <div className="text-center py-6 text-blue-400">
+          <Undo2 className="h-8 w-8 mx-auto mb-2" />
+          <p className="text-xs font-bold">여기에 놓으면 미배치</p>
         </div>
       ) : items.length === 0 ? (
         <div className="text-center py-6 text-gray-400">
