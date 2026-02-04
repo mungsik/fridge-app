@@ -93,7 +93,8 @@ export function AuthForm() {
       style={{ background: '#0d1117' }}
     >
       <div style={{
-        width: 440,
+        width: '100%',
+        maxWidth: 440,
         background: '#161b22',
         border: '1px solid #30363d',
         boxShadow: '0 8px 32px rgba(0,0,0,0.8)',

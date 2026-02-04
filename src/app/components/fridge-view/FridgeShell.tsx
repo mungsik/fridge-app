@@ -8,6 +8,7 @@ interface FridgeShellProps {
   freezerDoorContent: ReactNode;
   openZones: Set<string>;
   onZoneClick: (zone: string) => void;
+  isMobile?: boolean;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
@@ -19,10 +20,12 @@ export function FridgeShell({
   freezerDoorContent,
   openZones,
   onZoneClick,
+  isMobile,
 }: FridgeShellProps) {
   const fridgeOpen = openZones.has('fridge');
   const freezerOpen = openZones.has('freezer');
 
+  const W = isMobile ? '100%' : 280;
   const freezerH = 204;
   const dividerTop = freezerH;
   const fridgeTop = freezerH + 6;
@@ -36,7 +39,7 @@ export function FridgeShell({
       {/* ===== 냉장고 본체 ===== */}
       <div
         style={{
-          width: 280,
+          width: W,
           height: 520,
           background: '#1c1c1c',
           border: '3px solid #333',
@@ -105,7 +108,7 @@ export function FridgeShell({
         style={{
           position: 'absolute',
           top: 0, left: 0,
-          width: 280, height: freezerH,
+          width: W, height: freezerH,
           transformOrigin: 'right center',
           transformStyle: 'preserve-3d',
           zIndex: freezerOpen ? 5 : 15,
@@ -192,7 +195,7 @@ export function FridgeShell({
         style={{
           position: 'absolute',
           top: fridgeTop, left: 0,
-          width: 280, height: fridgeH,
+          width: W, height: fridgeH,
           transformOrigin: 'right center',
           transformStyle: 'preserve-3d',
           zIndex: fridgeOpen ? 5 : 15,
@@ -276,7 +279,7 @@ export function FridgeShell({
       <div
         style={{
           position: 'absolute', top: dividerTop, left: 0,
-          width: 280, height: 6,
+          width: W, height: 6,
           background: 'linear-gradient(180deg, #444 0%, #222 100%)',
           zIndex: 20, pointerEvents: 'none',
         }}

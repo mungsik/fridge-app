@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { FridgeItem } from '@/app/types/fridge';
 import { ZONE_IDS, DND_TYPES, DragItem } from './fridgeConstants';
 import { FridgeShell } from './FridgeShell';
@@ -13,6 +14,16 @@ import { useAuth } from '@/app/contexts/AuthContext';
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
+
 interface FridgeViewProps {
   items: FridgeItem[];
   onEdit: (item: FridgeItem) => void;
@@ -24,6 +35,7 @@ interface FridgeViewProps {
 
 export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }: FridgeViewProps) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [selectedItem, setSelectedItem] = useState<FridgeItem | null>(null);
   const [openZones, setOpenZones] = useState<Set<string>>(new Set());
 
@@ -94,38 +106,77 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
     ));
   };
 
-  return (
-    <DndProvider backend={HTML5Backend}>
-      <UnplaceDropZone onDelete={onDelete}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 0.3fr', gap: 24, alignItems: 'start' }}>
-          {/* Item panel (left, fills remaining space) */}
-          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} currentUserId={user?.id} />
+  const isTouchDevice = 'ontouchstart' in window;
+  const dndBackend = isTouchDevice ? TouchBackend : HTML5Backend;
 
-          {/* Fridge (right, fixed size) */}
-          <FridgeShell
-            openZones={openZones}
-            onZoneClick={handleZoneClick}
-            fridgeContent={
-              <FridgeShelf zoneId="fridge" onDrop={handleDrop}>
-                {renderShelfItems('fridge')}
-              </FridgeShelf>
-            }
-            fridgeDoorContent={
-              <FridgeShelf zoneId="fridge-door" onDrop={handleDrop}>
-                {renderShelfItems('fridge-door')}
-              </FridgeShelf>
-            }
-            freezerContent={
-              <FridgeShelf zoneId="freezer" onDrop={handleDrop}>
-                {renderShelfItems('freezer')}
-              </FridgeShelf>
-            }
-            freezerDoorContent={
-              <FridgeShelf zoneId="freezer-door" onDrop={handleDrop}>
-                {renderShelfItems('freezer-door')}
-              </FridgeShelf>
-            }
-          />
+  return (
+    <DndProvider backend={dndBackend} options={isTouchDevice ? { enableMouseEvents: true } : undefined}>
+      <UnplaceDropZone onDelete={onDelete}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr auto 0.3fr',
+          gap: isMobile ? 16 : 24,
+          alignItems: 'start',
+        }}>
+          {/* Fridge - on mobile, show first */}
+          {isMobile && (
+            <FridgeShell
+              openZones={openZones}
+              onZoneClick={handleZoneClick}
+              isMobile={isMobile}
+              fridgeContent={
+                <FridgeShelf zoneId="fridge" onDrop={handleDrop}>
+                  {renderShelfItems('fridge')}
+                </FridgeShelf>
+              }
+              fridgeDoorContent={
+                <FridgeShelf zoneId="fridge-door" onDrop={handleDrop}>
+                  {renderShelfItems('fridge-door')}
+                </FridgeShelf>
+              }
+              freezerContent={
+                <FridgeShelf zoneId="freezer" onDrop={handleDrop}>
+                  {renderShelfItems('freezer')}
+                </FridgeShelf>
+              }
+              freezerDoorContent={
+                <FridgeShelf zoneId="freezer-door" onDrop={handleDrop}>
+                  {renderShelfItems('freezer-door')}
+                </FridgeShelf>
+              }
+            />
+          )}
+
+          {/* Item panel */}
+          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} currentUserId={user?.id} isMobile={isMobile} />
+
+          {/* Fridge - desktop only */}
+          {!isMobile && (
+            <FridgeShell
+              openZones={openZones}
+              onZoneClick={handleZoneClick}
+              fridgeContent={
+                <FridgeShelf zoneId="fridge" onDrop={handleDrop}>
+                  {renderShelfItems('fridge')}
+                </FridgeShelf>
+              }
+              fridgeDoorContent={
+                <FridgeShelf zoneId="fridge-door" onDrop={handleDrop}>
+                  {renderShelfItems('fridge-door')}
+                </FridgeShelf>
+              }
+              freezerContent={
+                <FridgeShelf zoneId="freezer" onDrop={handleDrop}>
+                  {renderShelfItems('freezer')}
+                </FridgeShelf>
+              }
+              freezerDoorContent={
+                <FridgeShelf zoneId="freezer-door" onDrop={handleDrop}>
+                  {renderShelfItems('freezer-door')}
+                </FridgeShelf>
+              }
+            />
+          )}
         </div>
       </UnplaceDropZone>
 

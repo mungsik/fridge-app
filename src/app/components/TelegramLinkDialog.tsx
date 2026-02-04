@@ -145,7 +145,9 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          width: 440,
+          width: '100%',
+          maxWidth: 440,
+          margin: '0 16px',
           background: '#161b22',
           border: '1px solid #30363d',
           boxShadow: '0 8px 32px rgba(0,0,0,0.8)',

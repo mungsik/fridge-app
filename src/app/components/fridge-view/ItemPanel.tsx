@@ -12,11 +12,12 @@ interface ItemPanelProps {
   onAdd?: () => void;
   onDelete?: (id: string) => void;
   currentUserId?: string;
+  isMobile?: boolean;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
-export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, currentUserId }: ItemPanelProps) {
+export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, currentUserId, isMobile }: ItemPanelProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSelect = useCallback((id: string) => {
@@ -140,7 +141,7 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, curr
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
+              gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(6, 1fr)',
               gap: 6,
               maxHeight: 520,
               overflowY: 'auto',

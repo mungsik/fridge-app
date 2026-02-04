@@ -184,7 +184,9 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          width: 440,
+          width: '100%',
+          maxWidth: 440,
+          margin: '0 16px',
           maxHeight: '90vh',
           overflowY: 'auto',
           background: '#161b22',

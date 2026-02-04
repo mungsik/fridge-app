@@ -65,7 +65,9 @@ export function ItemDetailPopover({ item, onEdit, onDelete, onRemoveFromFridge, 
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          width: 340,
+          width: '100%',
+          maxWidth: 340,
+          margin: '0 16px',
           background: '#161b22',
           border: '1px solid #30363d',
           boxShadow: '0 8px 24px rgba(0,0,0,0.6)',

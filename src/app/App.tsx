@@ -286,7 +286,7 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
             {isAdmin && <span style={{ color: termColor.red }}> [ADMIN]</span>}
             <span style={{ color: termColor.textDim }}>)</span>
           </div>
-          <div>
+          <div style={{ wordBreak: 'break-word' }}>
             <span style={{ color: termColor.textDim }}>  [system] </span>
             <span style={{ color: termColor.textDim }}>items: </span>
             <span style={{ color: termColor.cyan }}>{items.length}</span>
