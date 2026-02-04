@@ -87,7 +87,7 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
       <UnplaceDropZone onDelete={onDelete}>
         <div className="flex gap-6 justify-center items-start">
           {/* Item panel (left) */}
-          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} />
+          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} />
 
           {/* Fridge (center) */}
           <FridgeShell

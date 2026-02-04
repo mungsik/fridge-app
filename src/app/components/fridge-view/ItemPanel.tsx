@@ -9,11 +9,12 @@ interface ItemPanelProps {
   onUnplace?: (id: string) => void;
   onItemClick?: (item: FridgeItem) => void;
   onAdd?: () => void;
+  onDelete?: (id: string) => void;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
-export function ItemPanel({ items, onUnplace, onItemClick, onAdd }: ItemPanelProps) {
+export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete }: ItemPanelProps) {
   const [{ isOver }, drop] = useDrop({
     accept: DND_TYPES.FRIDGE_ITEM,
     drop: (dragItem: DragItem) => {
@@ -94,7 +95,7 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd }: ItemPanelPro
         ) : (
           <div className="space-y-1 max-h-[480px] overflow-y-auto">
             {items.map(item => (
-              <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} />
+              <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} onDelete={onDelete} />
             ))}
           </div>
         )}
