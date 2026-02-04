@@ -15,6 +15,7 @@ import { Toaster } from '@/app/components/ui/sonner';
 import { useFridgeItems } from '@/app/hooks/useFridgeItems';
 import { FridgeView } from '@/app/components/fridge-view/FridgeView';
 import { TelegramLinkDialog } from '@/app/components/TelegramLinkDialog';
+import { PixelBanner } from '@/app/components/PixelBanner';
 
 /* ── Terminal style helpers ── */
 const mono: React.CSSProperties = {
@@ -355,26 +356,8 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        {/* ===== TITLE (ASCII art style) ===== */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ color: termColor.prompt, fontSize: 13, marginBottom: 8 }}>
-            <span style={{ color: termColor.cyan }}>user@fridge</span>
-            <span style={{ color: termColor.text }}>:</span>
-            <span style={{ color: termColor.cyan }}>~</span>
-            <span style={{ color: termColor.text }}>$ </span>
-            <span style={{ color: termColor.text }}>cat home.md</span>
-          </div>
-          <div style={{
-            border: `1px solid ${termColor.coral}`,
-            borderRadius: 6,
-            padding: '10px 20px',
-            display: 'inline-block',
-          }}>
-            <span style={{ color: termColor.coral, fontSize: 14 }}>
-              ✳ 냉장고를 부탁해 — fridge management system v1.0
-            </span>
-          </div>
-        </div>
+        {/* ===== PIXEL BANNER ===== */}
+        <PixelBanner />
 
         {/* Notifications */}
         <div className="mb-4">
