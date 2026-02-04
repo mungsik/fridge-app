@@ -24,7 +24,9 @@ export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSprite
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    getItemImageUrl(item.name, item.category).then(setImageUrl);
+    getItemImageUrl(item.name, item.category).then((url) => {
+      if (url && !url.endsWith('default.svg')) setImageUrl(url);
+    });
   }, [item.name, item.category]);
 
   const [{ isDragging }, drag] = useDrag({
@@ -37,9 +39,18 @@ export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSprite
 
   const status = getExpiryStatus(item.expiryDate);
 
+  const statusColor =
+    status === 'expired' ? '#f85149' :
+    status === 'expiring' ? '#d29922' :
+    '#3fb950';
+
   return (
-    <motion.div
+    <div
       ref={drag as unknown as React.Ref<HTMLDivElement>}
+      className="cursor-grab active:cursor-grabbing"
+      style={{ width: 56 }}
+    >
+    <motion.div
       layout
       initial={{ scale: 0, rotate: -180 }}
       animate={{
@@ -54,53 +65,58 @@ export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSprite
           : { type: 'spring', stiffness: 300, damping: 20 }
       }
       onClick={(e) => { e.stopPropagation(); onClick(item); }}
-      className="relative cursor-grab active:cursor-grabbing flex flex-col items-center"
-      style={{ width: 48 }}
+      className="relative flex flex-col items-center"
+      style={{ width: 56, imageRendering: 'pixelated' }}
       title={`${item.name} (${item.quantity}개)${item.ownerName ? ` - ${item.ownerName}` : ''}`}
     >
       {/* Status indicator */}
       <div
-        className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white z-10"
+        className="absolute -top-0.5 -right-0.5 z-10"
         style={{
-          background:
-            status === 'expired' ? '#EF4444' :
-            status === 'expiring' ? '#F59E0B' :
-            '#22C55E',
+          width: 8,
+          height: 8,
+          background: statusColor,
+          border: '1px solid rgba(0,0,0,0.4)',
+          boxShadow: status === 'expired' ? `0 0 4px ${statusColor}` : 'none',
         }}
       />
 
-      {/* Expired overlay */}
+      {/* Expired blink overlay */}
       {status === 'expired' && (
         <motion.div
-          className="absolute inset-0 rounded bg-red-500 z-[1]"
-          animate={{ opacity: [0.1, 0.25, 0.1] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          style={{ pointerEvents: 'none' }}
+          className="absolute inset-0 z-[1]"
+          style={{ background: '#f85149', pointerEvents: 'none' }}
+          animate={{ opacity: [0.05, 0.25, 0.05] }}
+          transition={{ repeat: Infinity, duration: 1.2 }}
         />
       )}
 
-      {/* Food icon */}
+      {/* Food icon with border */}
       <div
-        className="rounded"
         style={{
+          border: `1px solid ${status === 'expired' ? '#f85149' : status === 'expiring' ? '#d29922' : '#30363d'}`,
+          background: '#0d1117',
+          padding: 1,
           filter: status === 'expired' ? 'grayscale(0.5)' : 'none',
-          boxShadow:
-            status === 'expiring' ? '0 0 6px rgba(245, 158, 11, 0.5)' :
-            status === 'expired' ? '0 0 6px rgba(239, 68, 68, 0.5)' :
-            'none',
         }}
       >
-        {imageUrl && imageUrl !== '/images/items/default.svg' ? (
-          <img src={imageUrl} alt={item.name} width={36} height={36} className="rounded object-cover" />
+        {imageUrl ? (
+          <img src={imageUrl} alt={item.name} width={42} height={42} style={{ imageRendering: 'pixelated' }} />
         ) : (
-          <PixelFoodIcon name={item.name} category={item.category} size={36} />
+          <PixelFoodIcon name={item.name} category={item.category} size={42} />
         )}
       </div>
 
       {/* Item name */}
       <span
-        className="text-center leading-tight mt-0.5 font-mono truncate w-full"
-        style={{ fontSize: 8, color: '#555' }}
+        className="text-center leading-tight mt-0.5 truncate w-full"
+        style={{
+          fontSize: 9,
+          color: '#c9d1d9',
+          fontFamily: '"JetBrains Mono", "Courier New", monospace',
+          fontWeight: 'bold',
+          textShadow: '0 1px 0 rgba(0,0,0,0.8)',
+        }}
       >
         {item.name}
       </span>
@@ -108,12 +124,22 @@ export function FridgeItemSprite({ item, sourceZone, onClick }: FridgeItemSprite
       {/* Quantity badge */}
       {item.quantity > 1 && (
         <span
-          className="absolute -bottom-0.5 -left-0.5 bg-blue-500 text-white rounded-full text-center font-bold"
-          style={{ fontSize: 7, width: 14, height: 14, lineHeight: '14px' }}
+          className="absolute -bottom-0.5 -left-0.5 text-center font-bold"
+          style={{
+            fontSize: 7,
+            width: 14,
+            height: 14,
+            lineHeight: '14px',
+            color: '#7ee787',
+            background: '#0d1117',
+            border: '1px solid #30363d',
+            fontFamily: '"JetBrains Mono", "Courier New", monospace',
+          }}
         >
           {item.quantity}
         </span>
       )}
     </motion.div>
+    </div>
   );
 }

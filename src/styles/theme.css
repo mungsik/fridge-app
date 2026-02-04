@@ -42,7 +42,7 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: #161616;
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -178,4 +178,25 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+}
+
+/* Terminal-styled toast overrides */
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] {
+  border-color: #3fb950 !important;
+  border-left: 3px solid #3fb950 !important;
+  color: #3fb950 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] svg {
+  color: #3fb950 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] {
+  border-color: #f85149 !important;
+  border-left: 3px solid #f85149 !important;
+  color: #f85149 !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] svg {
+  color: #f85149 !important;
 }

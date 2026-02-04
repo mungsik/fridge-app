@@ -10,6 +10,8 @@ interface FridgeShellProps {
   onZoneClick: (zone: string) => void;
 }
 
+const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
+
 export function FridgeShell({
   fridgeContent,
   fridgeDoorContent,
@@ -21,50 +23,44 @@ export function FridgeShell({
   const fridgeOpen = openZones.has('fridge');
   const freezerOpen = openZones.has('freezer');
 
-  // 냉동실(위) 204px + 구분선 6px + 냉장실(아래) 310px = 520px
   const freezerH = 204;
-  const dividerTop = freezerH;       // 204
-  const fridgeTop = freezerH + 6;    // 210
+  const dividerTop = freezerH;
+  const fridgeTop = freezerH + 6;
   const fridgeH = 310;
 
   return (
     <div
       className="relative select-none"
-      style={{ perspective: 1200 }}
+      style={{ perspective: 1200, imageRendering: 'pixelated' }}
     >
-      {/* ===== 냉장고 본체 (내부 — 문 뒤에 숨겨짐) ===== */}
+      {/* ===== 냉장고 본체 ===== */}
       <div
         style={{
           width: 280,
           height: 520,
-          background: 'linear-gradient(180deg, #E8E8E8 0%, #D5D5D5 100%)',
-          border: '4px solid #424242',
-          borderRadius: 12,
-          boxShadow: '4px 4px 0 #333, inset 2px 2px 0 rgba(255,255,255,0.4)',
-          imageRendering: 'pixelated',
+          background: '#1c1c1c',
+          border: '3px solid #333',
+          borderRadius: 0,
+          boxShadow: '6px 6px 0 #0a0a0a, inset 0 0 20px rgba(0,0,0,0.3)',
           overflow: 'hidden',
           position: 'relative',
         }}
       >
-        {/* 냉동실 내부 (상단) */}
+        {/* 냉동실 내부 */}
         <div
           className="absolute"
           style={{ top: 0, left: 0, right: 0, height: freezerH, cursor: freezerOpen ? 'pointer' : 'default' }}
           onClick={() => freezerOpen && onZoneClick('freezer')}
         >
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(180deg, #E8EAF6 0%, #C5CAE9 100%)',
-              padding: 8,
-            }}
-          >
-            <div
-              className="font-mono text-center mb-1"
-              style={{ fontSize: 11, color: '#283593' }}
-            >
-              ❄ 냉동실 ❄
+          <div style={{ position: 'absolute', inset: 0, background: '#111', padding: 8 }}>
+            {/* 서리 패턴 */}
+            <div style={{
+              position: 'absolute', inset: 0, opacity: 0.06, pointerEvents: 'none',
+              backgroundImage: 'radial-gradient(circle, #99ccff 1px, transparent 1px)',
+              backgroundSize: '12px 12px',
+            }} />
+            <div className="text-center mb-1" style={{ ...mono, fontSize: 11, color: '#5599cc', fontWeight: 'bold', letterSpacing: 2 }}>
+              ❄ FREEZER
             </div>
             <div style={{ height: freezerH - 40 }}>{freezerContent}</div>
           </div>
@@ -74,52 +70,42 @@ export function FridgeShell({
         <div
           className="absolute"
           style={{
-            top: dividerTop,
-            left: 0,
-            right: 0,
-            height: 6,
-            background: '#616161',
-            borderTop: '2px solid #424242',
-            borderBottom: '2px solid #757575',
+            top: dividerTop, left: 0, right: 0, height: 6,
+            background: 'linear-gradient(180deg, #444 0%, #222 100%)',
+            borderTop: '1px solid #555',
+            borderBottom: '1px solid #111',
             zIndex: 2,
           }}
         />
 
-        {/* 냉장실 내부 (하단) */}
+        {/* 냉장실 내부 */}
         <div
           className="absolute"
           style={{ top: fridgeTop, left: 0, right: 0, bottom: 0, cursor: fridgeOpen ? 'pointer' : 'default' }}
           onClick={() => fridgeOpen && onZoneClick('fridge')}
         >
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'linear-gradient(180deg, #E3F2FD 0%, #BBDEFB 100%)',
-              padding: 8,
-            }}
-          >
-            <div
-              className="font-mono text-center mb-1"
-              style={{ fontSize: 11, color: '#1565C0' }}
-            >
-              ❄ 냉장실 ❄
+          <div style={{ position: 'absolute', inset: 0, background: '#131313', padding: 8 }}>
+            <div style={{
+              position: 'absolute', inset: 0, opacity: 0.04, pointerEvents: 'none',
+              backgroundImage: 'radial-gradient(circle, #aaddff 1px, transparent 1px)',
+              backgroundSize: '14px 14px',
+            }} />
+            <div className="text-center mb-1" style={{ ...mono, fontSize: 11, color: '#58a6ff', fontWeight: 'bold', letterSpacing: 2 }}>
+              🧊 FRIDGE
             </div>
             <div style={{ height: fridgeH - 40 }}>{fridgeContent}</div>
           </div>
         </div>
       </div>
 
-      {/* ===== 냉동실 문 (상단 오버레이) ===== */}
+      {/* ===== 냉동실 문 ===== */}
       <motion.div
         animate={{ rotateY: freezerOpen ? 130 : 0 }}
-        transition={{ type: 'spring', stiffness: 180, damping: 22 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: 280,
-          height: freezerH,
+          top: 0, left: 0,
+          width: 280, height: freezerH,
           transformOrigin: 'right center',
           transformStyle: 'preserve-3d',
           zIndex: freezerOpen ? 5 : 15,
@@ -128,80 +114,85 @@ export function FridgeShell({
         }}
         onClick={() => onZoneClick('freezer')}
       >
-        {/* 문 앞면 */}
+        {/* 문 앞면 — 다크 스틸 */}
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, #EEEEEE 0%, #E0E0E0 100%)',
-            border: '4px solid #424242',
-            borderRadius: '12px 12px 0 0',
-            boxShadow: 'inset -2px 2px 0 rgba(255,255,255,0.4)',
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 50%, #252525 100%)',
+            border: '3px solid #444',
+            boxShadow: 'inset 2px 2px 0 rgba(255,255,255,0.06), inset -2px -2px 0 rgba(0,0,0,0.3)',
             backfaceVisibility: 'hidden',
+            imageRendering: 'pixelated',
           }}
         >
+          {/* 브러시드 메탈 텍스처 */}
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.03, pointerEvents: 'none',
+            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.1) 1px, transparent 2px)',
+          }} />
           {/* 손잡이 */}
-          <div
-            style={{
-              position: 'absolute',
-              left: 14,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 10,
-              height: 40,
-              background: 'linear-gradient(90deg, #9E9E9E, #BDBDBD)',
-              borderRadius: 5,
-              border: '2px solid #757575',
-              boxShadow: '1px 1px 0 #555',
-            }}
-          />
-          <div
-            className="flex items-center justify-center h-full"
-            style={{ fontFamily: 'monospace', color: '#888', fontSize: 14, letterSpacing: 3 }}
-          >
+          <div style={{
+            position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+            width: 6, height: 32,
+            background: 'linear-gradient(90deg, #666, #888, #666)',
+            border: '1px solid #999',
+            boxShadow: '1px 0 2px rgba(0,0,0,0.4)',
+          }} />
+          <div className="flex items-center justify-center h-full" style={{ ...mono, color: '#999' }}>
             <div className="text-center">
-              <div style={{ fontSize: 28, marginBottom: 4 }}>🧊</div>
-              <div>냉동실</div>
-              <div style={{ fontSize: 10, color: '#aaa', marginTop: 4 }}>클릭하여 열기</div>
+              <div style={{ fontSize: 28, marginBottom: 6, lineHeight: 1, filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.4))' }}>❄</div>
+              <div style={{ fontSize: 12, fontWeight: 'bold', letterSpacing: 2, color: '#aaa' }}>냉동실</div>
+              <motion.div
+                animate={{ y: [0, -1, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                style={{
+                  marginTop: 10,
+                  fontSize: 10,
+                  fontWeight: 'bold',
+                  color: '#fff',
+                  background: '#3fb950',
+                  border: '2px solid #56d364',
+                  borderBottom: '3px solid #2ea043',
+                  padding: '3px 12px',
+                  letterSpacing: 1,
+                  cursor: 'pointer',
+                  textShadow: '0 1px 0 rgba(0,0,0,0.3)',
+                }}
+              >
+                ▶ OPEN ◀
+              </motion.div>
             </div>
           </div>
         </div>
 
-        {/* 문 뒷면 (문 안쪽 수납) */}
+        {/* 문 뒷면 */}
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, #FAFAFA 0%, #F0F0F0 100%)',
-            border: '3px solid #757575',
-            borderRadius: '8px 8px 0 0',
+            position: 'absolute', inset: 0,
+            background: '#111',
+            border: '2px solid #333',
             transform: 'rotateY(180deg)',
             backfaceVisibility: 'hidden',
             pointerEvents: 'auto',
             padding: 8,
           }}
         >
-          <div
-            className="font-mono text-center mb-1"
-            style={{ fontSize: 10, color: '#666' }}
-          >
-            문쪽 수납
+          <div className="text-center mb-1" style={{ ...mono, fontSize: 10, color: '#5599cc', fontWeight: 'bold', letterSpacing: 1 }}>
+            ┌─ FREEZER DOOR ─┐
           </div>
-          <div style={{ borderBottom: '2px solid #E0E0E0', marginBottom: 4 }} />
+          <div style={{ borderBottom: '1px solid #333', marginBottom: 4 }} />
           <div style={{ height: freezerH - 50 }}>{freezerDoorContent}</div>
         </div>
       </motion.div>
 
-      {/* ===== 냉장실 문 (하단 오버레이) ===== */}
+      {/* ===== 냉장실 문 ===== */}
       <motion.div
         animate={{ rotateY: fridgeOpen ? 130 : 0 }}
-        transition={{ type: 'spring', stiffness: 180, damping: 22 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 25 }}
         style={{
           position: 'absolute',
-          top: fridgeTop,
-          left: 0,
-          width: 280,
-          height: fridgeH,
+          top: fridgeTop, left: 0,
+          width: 280, height: fridgeH,
           transformOrigin: 'right center',
           transformStyle: 'preserve-3d',
           zIndex: fridgeOpen ? 5 : 15,
@@ -210,83 +201,92 @@ export function FridgeShell({
         }}
         onClick={() => onZoneClick('fridge')}
       >
-        {/* 문 앞면 */}
+        {/* 문 앞면 — 다크 스틸 (약간 밝은 톤) */}
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, #F8F8F8 0%, #EEEEEE 100%)',
-            border: '4px solid #424242',
-            borderRadius: '0 0 12px 12px',
-            boxShadow: 'inset -2px 2px 0 rgba(255,255,255,0.4)',
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, #3e3e3e 0%, #2e2e2e 50%, #282828 100%)',
+            border: '3px solid #484848',
+            boxShadow: 'inset 2px 2px 0 rgba(255,255,255,0.06), inset -2px -2px 0 rgba(0,0,0,0.3)',
             backfaceVisibility: 'hidden',
+            imageRendering: 'pixelated',
           }}
         >
+          {/* 브러시드 메탈 텍스처 */}
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.03, pointerEvents: 'none',
+            backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.1) 1px, transparent 2px)',
+          }} />
           {/* 손잡이 */}
-          <div
-            style={{
-              position: 'absolute',
-              left: 14,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 10,
-              height: 50,
-              background: 'linear-gradient(90deg, #9E9E9E, #BDBDBD)',
-              borderRadius: 5,
-              border: '2px solid #757575',
-              boxShadow: '1px 1px 0 #555',
-            }}
-          />
-          <div
-            className="flex items-center justify-center h-full"
-            style={{ fontFamily: 'monospace', color: '#888', fontSize: 14, letterSpacing: 3 }}
-          >
+          <div style={{
+            position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+            width: 6, height: 40,
+            background: 'linear-gradient(90deg, #666, #888, #666)',
+            border: '1px solid #999',
+            boxShadow: '1px 0 2px rgba(0,0,0,0.4)',
+          }} />
+          <div className="flex items-center justify-center h-full" style={{ ...mono, color: '#aaa' }}>
             <div className="text-center">
-              <div style={{ fontSize: 28, marginBottom: 4 }}>🧊</div>
-              <div>냉장실</div>
-              <div style={{ fontSize: 10, color: '#aaa', marginTop: 4 }}>클릭하여 열기</div>
+              <div style={{ fontSize: 32, marginBottom: 6, lineHeight: 1, filter: 'drop-shadow(0 2px 0 rgba(0,0,0,0.4))' }}>🧊</div>
+              <div style={{ fontSize: 12, fontWeight: 'bold', letterSpacing: 2, color: '#bbb' }}>냉장실</div>
+              <motion.div
+                animate={{ y: [0, -1, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut', delay: 0.3 }}
+                style={{
+                  marginTop: 10,
+                  fontSize: 10,
+                  fontWeight: 'bold',
+                  color: '#fff',
+                  background: '#3fb950',
+                  border: '2px solid #56d364',
+                  borderBottom: '3px solid #2ea043',
+                  padding: '3px 12px',
+                  letterSpacing: 1,
+                  cursor: 'pointer',
+                  textShadow: '0 1px 0 rgba(0,0,0,0.3)',
+                }}
+              >
+                ▶ OPEN ◀
+              </motion.div>
             </div>
           </div>
         </div>
 
-        {/* 문 뒷면 (문 안쪽 수납) */}
+        {/* 문 뒷면 */}
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(180deg, #FAFAFA 0%, #F0F0F0 100%)',
-            border: '3px solid #757575',
-            borderRadius: '0 0 8px 8px',
+            position: 'absolute', inset: 0,
+            background: '#131313',
+            border: '2px solid #333',
             transform: 'rotateY(180deg)',
             backfaceVisibility: 'hidden',
             pointerEvents: 'auto',
             padding: 8,
           }}
         >
-          <div
-            className="font-mono text-center mb-1"
-            style={{ fontSize: 10, color: '#666' }}
-          >
-            문쪽 수납
+          <div className="text-center mb-1" style={{ ...mono, fontSize: 10, color: '#58a6ff', fontWeight: 'bold', letterSpacing: 1 }}>
+            ┌─ FRIDGE DOOR ─┐
           </div>
-          <div style={{ borderBottom: '2px solid #E0E0E0', marginBottom: 4 }} />
+          <div style={{ borderBottom: '1px solid #333', marginBottom: 4 }} />
           <div style={{ height: fridgeH - 50 }}>{fridgeDoorContent}</div>
         </div>
       </motion.div>
 
-      {/* 문 사이 구분선 (항상 보임) */}
+      {/* 문 사이 구분선 */}
       <div
         style={{
-          position: 'absolute',
-          top: dividerTop,
-          left: 0,
-          width: 280,
-          height: 6,
-          background: '#616161',
-          zIndex: 20,
-          pointerEvents: 'none',
+          position: 'absolute', top: dividerTop, left: 0,
+          width: 280, height: 6,
+          background: 'linear-gradient(180deg, #444 0%, #222 100%)',
+          zIndex: 20, pointerEvents: 'none',
         }}
       />
+
+      {/* 냉장고 다리 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px' }}>
+        <div style={{ width: 24, height: 6, background: '#333', border: '1px solid #444' }} />
+        <div style={{ width: 24, height: 6, background: '#333', border: '1px solid #444' }} />
+      </div>
     </div>
   );
 }

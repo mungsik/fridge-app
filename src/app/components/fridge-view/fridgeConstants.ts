@@ -21,12 +21,16 @@ export interface DragItem {
 
 // 카테고리 키워드 → 아이콘 타입 매핑
 export const CATEGORY_KEYWORDS: Record<string, string[]> = {
-  dairy: ['유제품', '우유', '치즈', '요구르트', '버터', '크림'],
-  meat: ['육류', '고기', '소고기', '돼지고기', '닭고기', '생선', '해산물', '새우'],
-  vegetable: ['채소', '야채', '당근', '양파', '배추', '상추', '브로콜리', '시금치'],
-  fruit: ['과일', '사과', '배', '바나나', '딸기', '포도', '오렌지', '귤'],
-  beverage: ['음료', '물', '주스', '콜라', '맥주', '사이다', '커피', '차'],
-  sideDish: ['반찬', '김치', '젓갈', '장아찌', '나물'],
+  fruit: ['과일', '사과', '배', '바나나', '딸기', '포도', '오렌지', '귤', 'apple'],
+  vegetable: ['야채', '당근', '양파', '배추', '상추', '시금치', 'carrot'],
+  greens: ['채소', '브로콜리', 'brocolli'],
+  beverage: ['음료', '물', '주스', '콜라', '맥주', '사이다', '커피', '차', 'soda'],
+  dairy: ['우유', '유제품', '치즈', '요구르트', '버터', '크림', 'milk'],
+  sideDish: ['개인반찬', '반찬', '김치', '젓갈', '장아찌', '나물', 'bento'],
+  salad: ['셀러드', '샐러드', 'salad'],
+  bread: ['빵', '식빵', '베이글', '크로와상', 'bread'],
+  iceCream: ['아이스크림', '아이스바', '젤라또', 'ice cream', 'icecream'],
+  other: ['기타'],
 };
 
 export function detectCategory(name: string, category: string): string {

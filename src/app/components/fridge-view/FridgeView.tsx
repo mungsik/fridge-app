@@ -8,17 +8,20 @@ import { FridgeShelf } from './FridgeShelf';
 import { FridgeItemSprite } from './FridgeItemSprite';
 import { ItemPanel } from './ItemPanel';
 import { ItemDetailPopover } from './ItemDetailPopover';
-import { Undo2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+
+const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
 interface FridgeViewProps {
   items: FridgeItem[];
   onEdit: (item: FridgeItem) => void;
   onDelete: (id: string) => void;
   onUpdateLocation: (item: FridgeItem, newLocation: string) => void;
+  onAdd?: () => void;
   isAdmin: boolean;
 }
 
-export function FridgeView({ items, onEdit, onDelete, onUpdateLocation }: FridgeViewProps) {
+export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }: FridgeViewProps) {
   const [selectedItem, setSelectedItem] = useState<FridgeItem | null>(null);
   const [openZones, setOpenZones] = useState<Set<string>>(new Set());
 
@@ -81,10 +84,10 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation }: Fridge
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <UnplaceDropZone onUnplace={handleUnplace}>
+      <UnplaceDropZone onDelete={onDelete}>
         <div className="flex gap-6 justify-center items-start">
           {/* Item panel (left) */}
-          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} />
+          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} />
 
           {/* Fridge (center) */}
           <FridgeShell
@@ -128,34 +131,41 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation }: Fridge
   );
 }
 
-function UnplaceDropZone({ children, onUnplace }: { children: React.ReactNode; onUnplace: (id: string) => void }) {
-  const [{ isOver, canDrop }, drop] = useDrop<DragItem, { handled: boolean }, { isOver: boolean; canDrop: boolean }>({
+function UnplaceDropZone({ children, onDelete }: { children: React.ReactNode; onDelete: (id: string) => void }) {
+  const [{ isOver }, drop] = useDrop<DragItem, { handled: boolean }, { isOver: boolean }>({
     accept: DND_TYPES.FRIDGE_ITEM,
     drop: (dragItem, monitor) => {
-      // 내부 드롭 존(선반)이 이미 처리했으면 무시
       if (monitor.didDrop()) return;
-      if (dragItem.sourceZone) {
-        onUnplace(dragItem.id);
-      }
+      onDelete(dragItem.id);
       return { handled: true };
     },
-    canDrop: (dragItem) => !!dragItem.sourceZone,
     collect: (monitor) => ({
       isOver: monitor.isOver({ shallow: true }),
-      canDrop: monitor.canDrop(),
     }),
   });
 
-  const showIndicator = isOver && canDrop;
+  const showIndicator = isOver;
 
   return (
     <div ref={drop as unknown as React.Ref<HTMLDivElement>} className="relative">
       {children}
       {showIndicator && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-          <div className="bg-blue-500/80 text-white rounded-xl px-6 py-4 flex items-center gap-3 shadow-lg">
-            <Undo2 className="h-6 w-6" />
-            <span className="font-bold">놓으면 미배치</span>
+          <div
+            className="flex items-center gap-3"
+            style={{
+              background: '#0d1117',
+              border: '1px solid #f85149',
+              padding: '10px 20px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              ...mono,
+              color: '#f85149',
+              fontWeight: 'bold',
+              letterSpacing: 1,
+            }}
+          >
+            <Trash2 className="h-6 w-6" />
+            <span>▶ DROP = DELETE ◀</span>
           </div>
         </div>
       )}

@@ -1,3 +1,16 @@
+// 한국어 카테고리 → 이미지 파일명 매핑
+const CATEGORY_TO_FILENAME: Record<string, string> = {
+  '과일': 'apple',
+  '야채': 'carrot',
+  '채소': 'brocolli',
+  '음료': 'soda',
+  '우유': 'milk',
+  '개인반찬': 'bento',
+  '셀러드': 'salad',
+  '빵': 'bread',
+  '아이스크림': 'icecream',
+};
+
 const imageCache = new Map<string, string | null>();
 
 function tryLoadImage(url: string): Promise<boolean> {
@@ -22,10 +35,17 @@ async function findImage(dir: string, name: string): Promise<string | null> {
 }
 
 export async function getItemImageUrl(itemName: string, category: string): Promise<string> {
-  // 1. Try category match
+  // 1. Try category match (direct Korean name)
   if (category) {
     const categoryImage = await findImage('category', category);
     if (categoryImage) return categoryImage;
+
+    // Try mapped English filename
+    const mapped = CATEGORY_TO_FILENAME[category];
+    if (mapped) {
+      const mappedImage = await findImage('category', mapped);
+      if (mappedImage) return mappedImage;
+    }
   }
 
   // 2. Try exact name match

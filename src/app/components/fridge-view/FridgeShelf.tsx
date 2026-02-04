@@ -26,19 +26,16 @@ export function FridgeShelf({ zoneId, children, onDrop }: FridgeShelfProps) {
   return (
     <div
       ref={drop as unknown as React.Ref<HTMLDivElement>}
-      className="h-full rounded-md transition-all duration-200 overflow-auto"
+      className="h-full transition-all duration-200 overflow-auto"
       style={{
+        borderRadius: 0,
         background: isOver && canDrop
-          ? 'rgba(59, 130, 246, 0.15)'
-          : canDrop
-            ? 'rgba(59, 130, 246, 0.05)'
-            : 'transparent',
-        boxShadow: isOver && canDrop
-          ? 'inset 0 0 12px rgba(59, 130, 246, 0.3)'
-          : 'none',
+          ? 'rgba(88, 166, 255, 0.1)'
+          : 'transparent',
         border: isOver && canDrop
-          ? '2px dashed #3B82F6'
-          : '2px dashed transparent',
+          ? '1px dashed #58a6ff'
+          : '1px dashed transparent',
+        imageRendering: 'pixelated',
       }}
     >
       <div className="flex flex-wrap gap-1 p-1 content-start">

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { FridgeItemForm } from '@/app/components/FridgeItemForm';
@@ -8,24 +7,45 @@ import { NotificationBanner } from '@/app/components/NotificationBanner';
 import { AuthForm } from '@/app/components/AuthForm';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { FridgeItem } from '@/app/types/fridge';
-import { Plus, Search, Refrigerator, Loader2, RefreshCw, AlertCircle, LogOut, LayoutGrid, MessageCircle } from 'lucide-react';
+import { Plus, Search, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Toaster } from '@/app/components/ui/sonner';
 import { useFridgeItems } from '@/app/hooks/useFridgeItems';
-import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { FridgeView } from '@/app/components/fridge-view/FridgeView';
 import { TelegramLinkDialog } from '@/app/components/TelegramLinkDialog';
+
+/* ── Terminal style helpers ── */
+const mono: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", "Courier New", monospace',
+};
+
+const termColor = {
+  bg: '#161616',
+  surface: '#1e1e1e',
+  border: '#30363d',
+  text: '#c9d1d9',
+  textDim: '#6e7681',
+  green: '#3fb950',
+  greenDim: '#238636',
+  cyan: '#58a6ff',
+  coral: '#f0a090',
+  coralDim: '#e8846b',
+  red: '#f85149',
+  yellow: '#d29922',
+  prompt: '#79c0ff',
+};
 
 export default function App() {
   const { user, isLoading: authLoading, signOut, isAdmin, username } = useAuth();
 
-  // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">로딩 중...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: termColor.bg }}>
+        <div style={mono}>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" style={{ color: termColor.green }} />
+          <p style={{ color: termColor.green, fontSize: 13 }}>
+            <span style={{ color: termColor.textDim }}>$</span> connecting...
+          </p>
         </div>
       </div>
     );
@@ -67,9 +87,9 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
     try {
       setIsSubmitting(true);
       await createItem(itemData);
-      toast.success('식품이 등록되었습니다.');
+      toast.success('▶ ITEM SAVED — 인벤토리에 추가됨');
     } catch (err) {
-      toast.error('식품 등록에 실패했습니다.');
+      toast.error('✖ SAVE FAILED — 등록 실패');
       console.error('Create failed:', err);
     } finally {
       setIsSubmitting(false);
@@ -83,9 +103,9 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
       setIsSubmitting(true);
       await updateItem(editingItem.id, itemData);
       setEditingItem(null);
-      toast.success('식품이 수정되었습니다.');
+      toast.success('▶ ITEM UPDATED — 수정 완료');
     } catch (err) {
-      toast.error('식품 수정에 실패했습니다.');
+      toast.error('✖ UPDATE FAILED — 수정 실패');
       console.error('Update failed:', err);
     } finally {
       setIsSubmitting(false);
@@ -95,9 +115,9 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   const handleDelete = async (id: string) => {
     try {
       await deleteItem(id);
-      toast.success('식품이 삭제되었습니다.');
+      toast.success('▶ ITEM DELETED — 삭제 완료');
     } catch (err) {
-      toast.error('식품 삭제에 실패했습니다.');
+      toast.error('✖ DELETE FAILED — 삭제 실패');
       console.error('Delete failed:', err);
     }
   };
@@ -117,15 +137,13 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
         location: newLocation,
       });
     } catch (err) {
-      toast.error('위치 변경에 실패했습니다.');
+      toast.error('✖ MOVE FAILED — 위치 변경 실패');
       console.error('Location update failed:', err);
     }
   };
 
-  // Get unique categories
   const categories = Array.from(new Set(items.map(item => item.category).filter(Boolean)));
 
-  // Filter items
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,10 +155,12 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">데이터를 불러오는 중...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: termColor.bg }}>
+        <div style={mono}>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" style={{ color: termColor.green }} />
+          <p style={{ color: termColor.green, fontSize: 13 }}>
+            <span style={{ color: termColor.textDim }}>$</span> loading data...
+          </p>
         </div>
       </div>
     );
@@ -149,187 +169,293 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="ml-2">
-            <p className="font-medium mb-2">데이터를 불러오는데 실패했습니다</p>
-            <p className="text-sm mb-4">{error}</p>
-            <Button variant="outline" size="sm" onClick={refetch}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              다시 시도
-            </Button>
-          </AlertDescription>
-        </Alert>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: termColor.bg }}>
+        <div style={{ ...mono, maxWidth: 400, width: '100%' }}>
+          <p style={{ color: termColor.red, fontSize: 13, marginBottom: 8 }}>
+            <span style={{ color: termColor.textDim }}>$</span> cat /var/log/error
+          </p>
+          <div style={{ border: `1px solid ${termColor.red}`, padding: 16 }}>
+            <AlertCircle className="h-5 w-5 mb-2" style={{ color: termColor.red }} />
+            <p style={{ color: termColor.red, fontSize: 13, marginBottom: 4 }}>ERROR: 데이터를 불러오는데 실패했습니다</p>
+            <p style={{ color: termColor.textDim, fontSize: 12, marginBottom: 16 }}>{error}</p>
+            <button
+              onClick={refetch}
+              style={{
+                ...mono,
+                background: 'transparent',
+                border: `1px solid ${termColor.green}`,
+                color: termColor.green,
+                padding: '6px 16px',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              <RefreshCw className="h-3 w-3 inline mr-2" />
+              retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
+  const expiredCount = items.filter(item => {
+    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    return diff < 0;
+  }).length;
+
+  const expiringCount = items.filter(item => {
+    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    return diff >= 0 && diff <= 3;
+  }).length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: termColor.bg, color: termColor.text, ...mono }}>
       <Toaster />
 
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold">냉장고를 부탁해</h1>
-              </div>
-              <p className="text-gray-600">식품 등록하고 유통기한을 관리하세요</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={telegramChatId ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setIsTelegramDialogOpen(true)}
-                title="텔레그램 알림 연동"
-              >
-                <MessageCircle className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">{telegramChatId ? '연동됨' : '텔레그램'}</span>
-              </Button>
-              {isAdmin
-                ? <span className="text-xs font-medium text-white bg-red-500 rounded px-2 py-0.5">관리자</span>
-                : <span className="text-sm text-gray-600 hidden sm:block">{username}</span>
-              }
-              <Button variant="ghost" size="icon" onClick={signOut} title="로그아웃">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
+      {/* ===== TERMINAL HEADER ===== */}
+      <header style={{ borderBottom: `1px solid ${termColor.border}`, padding: '16px 0' }}>
+        <div className="container mx-auto px-4" style={{ fontSize: 13, lineHeight: 2 }}>
+          {/* SSH line */}
+          <div>
+            <span style={{ color: termColor.textDim }}>$ </span>
+            <span style={{ color: termColor.text }}>ssh fridge@naengboo.app</span>
+          </div>
+          <div>
+            <span style={{ color: termColor.textDim }}>  연결 중... </span>
+            <span style={{ color: termColor.coral }}>naengboo.app</span>
+            <span style={{ color: termColor.textDim }}>...</span>
+          </div>
+          <div>
+            <span style={{ color: termColor.green }}>  ✓ </span>
+            <span style={{ color: termColor.green }}>연결 완료</span>
+            <span style={{ color: termColor.textDim }}> (사용자: </span>
+            <span style={{ color: termColor.cyan }}>{username}</span>
+            {isAdmin && <span style={{ color: termColor.red }}> [ADMIN]</span>}
+            <span style={{ color: termColor.textDim }}>)</span>
+          </div>
+          <div>
+            <span style={{ color: termColor.textDim }}>  [system] </span>
+            <span style={{ color: termColor.textDim }}>items: </span>
+            <span style={{ color: termColor.cyan }}>{items.length}</span>
+            <span style={{ color: termColor.textDim }}> | expired: </span>
+            <span style={{ color: expiredCount > 0 ? termColor.red : termColor.textDim }}>{expiredCount}</span>
+            <span style={{ color: termColor.textDim }}> | warning: </span>
+            <span style={{ color: expiringCount > 0 ? termColor.yellow : termColor.textDim }}>{expiringCount}</span>
+            <span style={{ color: termColor.textDim }}> | categories: </span>
+            <span style={{ color: termColor.green }}>{categories.length}</span>
+            {telegramChatId && (
+              <>
+                <span style={{ color: termColor.textDim }}> | telegram: </span>
+                <span style={{ color: termColor.green }}>linked</span>
+              </>
+            )}
+          </div>
+
+          {/* Navigation */}
+          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <span style={{ color: termColor.textDim }}>{'>'}</span>
+            <button
+              onClick={() => setViewMode('fridge')}
+              style={{
+                ...mono,
+                background: 'transparent',
+                border: 'none',
+                color: viewMode === 'fridge' ? termColor.coral : termColor.textDim,
+                fontSize: 13,
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              [0] /fridge
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                ...mono,
+                background: 'transparent',
+                border: 'none',
+                color: viewMode === 'grid' ? termColor.coral : termColor.textDim,
+                fontSize: 13,
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              [1] /grid
+            </button>
+            <button
+              onClick={() => setIsTelegramDialogOpen(true)}
+              style={{
+                ...mono,
+                background: 'transparent',
+                border: 'none',
+                color: termColor.textDim,
+                fontSize: 13,
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              [2] /telegram
+            </button>
+            <button
+              onClick={signOut}
+              style={{
+                ...mono,
+                background: 'transparent',
+                border: 'none',
+                color: termColor.textDim,
+                fontSize: 13,
+                cursor: 'pointer',
+                padding: 0,
+                marginLeft: 'auto',
+              }}
+            >
+              [q] /logout
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Notifications */}
-        <div className="mb-6">
-          <NotificationBanner items={items} />
+      <main className="container mx-auto px-4 py-6">
+        {/* ===== TITLE (ASCII art style) ===== */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ color: termColor.prompt, fontSize: 13, marginBottom: 8 }}>
+            <span style={{ color: termColor.cyan }}>user@fridge</span>
+            <span style={{ color: termColor.text }}>:</span>
+            <span style={{ color: termColor.cyan }}>~</span>
+            <span style={{ color: termColor.text }}>$ </span>
+            <span style={{ color: termColor.text }}>cat home.md</span>
+          </div>
+          <div style={{
+            border: `1px solid ${termColor.coral}`,
+            borderRadius: 6,
+            padding: '10px 20px',
+            display: 'inline-block',
+          }}>
+            <span style={{ color: termColor.coral, fontSize: 14 }}>
+              ✳ 냉장고를 부탁해 — fridge management system v1.0
+            </span>
+          </div>
         </div>
 
-        {/* Controls */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        {/* Notifications */}
+        <div className="mb-4">
+          <NotificationBanner items={items} isAdmin={isAdmin} />
+        </div>
+
+        {/* ===== COMMAND INPUT ===== */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ color: termColor.prompt, fontSize: 13, marginBottom: 10 }}>
+            <span style={{ color: termColor.cyan }}>user@fridge</span>
+            <span style={{ color: termColor.text }}>:</span>
+            <span style={{ color: termColor.cyan }}>~</span>
+            <span style={{ color: termColor.text }}>$ </span>
+            <span style={{ color: termColor.textDim }}>{'>'}</span>
+            <span style={{ color: termColor.textDim }}>명령어를 입력하세요...</span>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3" style={{ paddingLeft: 16 }}>
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" style={{ color: termColor.textDim }} />
               <Input
-                placeholder="식품명, 카테고리, 위치로 검색..."
+                placeholder="/search ..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 rounded-none border border-[#30363d] bg-[#161616] text-[#c9d1d9] placeholder:text-[#6e7681] focus-visible:ring-[#58a6ff] focus-visible:ring-offset-0 focus-visible:border-[#58a6ff]"
+                style={mono}
               />
             </div>
 
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="카테고리 필터" />
+              <SelectTrigger className="w-full md:w-[180px] rounded-none border border-[#30363d] bg-[#161616] text-[#c9d1d9]" style={mono}>
+                <SelectValue placeholder="/filter category" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 카테고리</SelectItem>
+              <SelectContent className="rounded-none border border-[#30363d] bg-[#161b22]" style={mono}>
+                <SelectItem value="all" className="text-[#c9d1d9] focus:bg-[#30363d] focus:text-[#f0a090]">전체</SelectItem>
                 {categories.map(category => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem key={category} value={category} className="text-[#c9d1d9] focus:bg-[#30363d] focus:text-[#f0a090]">
                     {category}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <div className="flex gap-1 border rounded-lg p-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                title="카드 뷰"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'fridge' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('fridge')}
-                title="냉장고 뷰"
-              >
-                <Refrigerator className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button onClick={() => setIsFormOpen(true)} className="w-full md:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              새 식품 등록
-            </Button>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              style={{
+                ...mono,
+                background: termColor.greenDim,
+                border: `1px solid ${termColor.green}`,
+                color: '#ffffff',
+                padding: '6px 16px',
+                fontSize: 13,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              /add
+            </button>
           </div>
         </div>
 
-        {/* Stats */}
-        {items.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-blue-600">{items.length}</p>
-                <p className="text-sm text-gray-600">전체 식품</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-red-600">
-                  {items.filter(item => {
-                    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return diff < 0;
-                  }).length}
-                </p>
-                <p className="text-sm text-gray-600">유통기한 만료</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-orange-600">
-                  {items.filter(item => {
-                    const diff = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return diff >= 0 && diff <= 3;
-                  }).length}
-                </p>
-                <p className="text-sm text-gray-600">곧 만료</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">{categories.length}</p>
-                <p className="text-sm text-gray-600">카테고리</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Content */}
+        {/* ===== CONTENT ===== */}
         {viewMode === 'fridge' ? (
           <FridgeView
             items={filteredItems}
             onEdit={openEditForm}
             onDelete={handleDelete}
             onUpdateLocation={handleUpdateLocation}
+            onAdd={() => setIsFormOpen(true)}
             isAdmin={isAdmin}
           />
         ) : filteredItems.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <Refrigerator className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              {items.length === 0 ? '등록된 식품이 없습니다' : '검색 결과가 없습니다'}
-            </h3>
-            <p className="text-gray-500 mb-4">
-              {items.length === 0 ? '첫 번째 식품을 등록해보세요!' : '다른 검색어를 시도해보세요.'}
+          <div style={{ padding: '40px 16px', textAlign: 'center' }}>
+            <p style={{ color: termColor.textDim, fontSize: 13, marginBottom: 8 }}>
+              <span style={{ color: termColor.textDim }}>$</span> ls /fridge
             </p>
-            {items.length === 0 && (
-              <Button onClick={() => setIsFormOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                식품 등록하기
-              </Button>
-            )}
+            <div style={{ border: `1px dashed ${termColor.border}`, padding: 24, display: 'inline-block' }}>
+              <p style={{ color: termColor.textDim, fontSize: 13 }}>
+                {items.length === 0 ? '(empty)' : 'no matching items found'}
+              </p>
+              {items.length === 0 && (
+                <button
+                  onClick={() => setIsFormOpen(true)}
+                  style={{
+                    ...mono,
+                    background: 'transparent',
+                    border: `1px solid ${termColor.green}`,
+                    color: termColor.green,
+                    padding: '6px 16px',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    marginTop: 12,
+                  }}
+                >
+                  /add first item
+                </button>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredItems.map(item => (
-              <FridgeItemCard
-                key={item.id}
-                item={item}
-                onEdit={openEditForm}
-                onDelete={handleDelete}
-                isAdmin={isAdmin}
-              />
-            ))}
+          <div>
+            <p style={{ color: termColor.textDim, fontSize: 12, marginBottom: 12 }}>
+              <span style={{ color: termColor.textDim }}>$</span> ls /fridge <span style={{ color: termColor.textDim }}>— {filteredItems.length} items</span>
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredItems.map(item => (
+                <FridgeItemCard
+                  key={item.id}
+                  item={item}
+                  onEdit={openEditForm}
+                  onDelete={handleDelete}
+                  isAdmin={isAdmin}
+                />
+              ))}
+            </div>
           </div>
         )}
       </main>

@@ -1,7 +1,4 @@
-import { Card, CardContent } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { Pencil, Trash2, AlertCircle, Clock } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { FridgeItem, NotificationStatus } from '@/app/types/fridge';
 import { differenceInDays } from 'date-fns';
 
@@ -11,6 +8,23 @@ interface FridgeItemCardProps {
   onDelete: (id: string) => void;
   isAdmin?: boolean;
 }
+
+const mono: React.CSSProperties = {
+  fontFamily: '"JetBrains Mono", "Courier New", monospace',
+};
+
+const tc = {
+  bg: '#0d1117',
+  surface: '#161b22',
+  border: '#30363d',
+  text: '#c9d1d9',
+  textDim: '#6e7681',
+  green: '#3fb950',
+  cyan: '#58a6ff',
+  coral: '#f0a090',
+  red: '#f85149',
+  yellow: '#d29922',
+};
 
 export function FridgeItemCard({ item, onEdit, onDelete, isAdmin }: FridgeItemCardProps) {
   const getExpiryStatus = (): NotificationStatus => {
@@ -26,72 +40,114 @@ export function FridgeItemCard({ item, onEdit, onDelete, isAdmin }: FridgeItemCa
   const status = getExpiryStatus();
   const daysUntilExpiry = differenceInDays(new Date(item.expiryDate), new Date());
 
-  const getStatusBadge = () => {
-    switch (status) {
-      case 'expired':
-        return (
-          <Badge variant="destructive" className="flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            유통기한 만료
-          </Badge>
-        );
-      case 'expiring-soon':
-        return (
-          <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800">
-            <Clock className="h-3 w-3" />
-            {daysUntilExpiry}일 남음
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
-            {daysUntilExpiry}일 남음
-          </Badge>
-        );
-    }
-  };
+  const statusColor = status === 'expired' ? tc.red : status === 'expiring-soon' ? tc.yellow : tc.green;
+  const statusLabel = status === 'expired' ? 'EXPIRED' : `${daysUntilExpiry}d left`;
 
   return (
-    <Card className={status === 'expired' ? 'border-red-300 bg-red-50/50' : ''}>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
-            <p className="text-sm text-gray-600">수량: {item.quantity}개</p>
+    <div
+      style={{
+        ...mono,
+        background: tc.surface,
+        border: `1px solid ${tc.border}`,
+        fontSize: 13,
+      }}
+    >
+      {/* Header line */}
+      <div style={{
+        padding: '8px 12px',
+        borderBottom: `1px solid ${tc.border}`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}>
+        <span style={{ color: statusColor }}>●</span>
+        <span style={{ color: tc.text, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {item.name}
+        </span>
+        <span style={{ color: tc.textDim, fontSize: 12 }}>x{item.quantity}</span>
+      </div>
+
+      {/* Content - terminal output style */}
+      <div style={{ padding: '8px 12px', fontSize: 12, lineHeight: 1.8 }}>
+        <div>
+          <span style={{ color: tc.textDim }}>status  </span>
+          <span style={{ color: statusColor }}>{statusLabel}</span>
+        </div>
+        <div>
+          <span style={{ color: tc.textDim }}>expiry  </span>
+          <span style={{ color: tc.text }}>{item.expiryDate}</span>
+        </div>
+        {item.category && (
+          <div>
+            <span style={{ color: tc.textDim }}>type    </span>
+            <span style={{ color: tc.text }}>{item.category}</span>
           </div>
-          {getStatusBadge()}
-        </div>
+        )}
+        {item.location && (
+          <div>
+            <span style={{ color: tc.textDim }}>zone    </span>
+            <span style={{ color: tc.text }}>{item.location}</span>
+          </div>
+        )}
+        {isAdmin && item.ownerName && (
+          <div>
+            <span style={{ color: tc.textDim }}>owner   </span>
+            <span style={{ color: tc.cyan }}>{item.ownerName}</span>
+          </div>
+        )}
+      </div>
 
-        <div className="space-y-1 mb-4 text-sm text-gray-600">
-          {isAdmin && item.ownerName && (
-            <p className="font-medium text-blue-600">등록자: {item.ownerName}</p>
-          )}
-          <p>유통기한: {item.expiryDate}</p>
-          {item.category && <p>카테고리: {item.category}</p>}
-          {item.location && <p>위치: {item.location}</p>}
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(item)}
-            className="flex-1"
-          >
-            <Pencil className="h-4 w-4 mr-1" />
-            수정
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete(item.id)}
-            className="flex-1 text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            삭제
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Actions */}
+      <div style={{
+        borderTop: `1px solid ${tc.border}`,
+        display: 'flex',
+      }}>
+        <button
+          onClick={() => onEdit(item)}
+          style={{
+            ...mono,
+            flex: 1,
+            background: 'transparent',
+            color: tc.textDim,
+            border: 'none',
+            borderRight: `1px solid ${tc.border}`,
+            padding: '6px 0',
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = tc.cyan; e.currentTarget.style.background = tc.bg; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = tc.textDim; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <Pencil style={{ width: 12, height: 12 }} />
+          /edit
+        </button>
+        <button
+          onClick={() => onDelete(item.id)}
+          style={{
+            ...mono,
+            flex: 1,
+            background: 'transparent',
+            color: tc.textDim,
+            border: 'none',
+            padding: '6px 0',
+            fontSize: 12,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = tc.red; e.currentTarget.style.background = tc.bg; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = tc.textDim; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <Trash2 style={{ width: 12, height: 12 }} />
+          /rm
+        </button>
+      </div>
+    </div>
   );
 }
