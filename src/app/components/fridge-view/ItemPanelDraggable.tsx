@@ -18,10 +18,14 @@ export function ItemPanelDraggable({ item, onClick }: ItemPanelDraggableProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (item.imageUrl) {
+      setImageUrl(item.imageUrl);
+      return;
+    }
     getItemImageUrl(item.name, item.category).then((url) => {
       if (url && !url.endsWith('default.svg')) setImageUrl(url);
     });
-  }, [item.name, item.category]);
+  }, [item.name, item.category, item.imageUrl]);
 
   const [{ isDragging }, drag] = useDrag({
     type: DND_TYPES.FRIDGE_ITEM,

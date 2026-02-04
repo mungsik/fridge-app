@@ -20,10 +20,14 @@ export function ItemDetailPopover({ item, onEdit, onDelete, onRemoveFromFridge, 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (item.imageUrl) {
+      setImageUrl(item.imageUrl);
+      return;
+    }
     getItemImageUrl(item.name, item.category).then((url) => {
       if (url && !url.endsWith('default.svg')) setImageUrl(url);
     });
-  }, [item.name, item.category]);
+  }, [item.name, item.category, item.imageUrl]);
 
   const days = differenceInDays(new Date(item.expiryDate), new Date());
   const isExpired = days < 0;
@@ -88,7 +92,10 @@ export function ItemDetailPopover({ item, onEdit, onDelete, onRemoveFromFridge, 
               padding: 4,
             }}>
               {imageUrl ? (
-                <img src={imageUrl} alt={item.name} width={48} height={48} style={{ imageRendering: 'pixelated' }} />
+                <img src={imageUrl} alt={item.name} width={48} height={48} style={{
+                  objectFit: 'cover',
+                  imageRendering: item.imageUrl ? 'auto' : 'pixelated',
+                }} />
               ) : (
                 <PixelFoodIcon name={item.name} category={item.category} size={48} />
               )}

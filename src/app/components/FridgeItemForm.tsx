@@ -1,12 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { FridgeItem } from '@/app/types/fridge';
 import { FRIDGE_ZONES } from '@/app/components/fridge-view/fridgeConstants';
-import { Loader2, X, ChevronDown } from 'lucide-react';
+import { Loader2, X, ChevronDown, Camera, Trash2 } from 'lucide-react';
+
+export interface FridgeItemFormData {
+  name: string;
+  quantity: number;
+  expiryDate: string;
+  category: string;
+  location: string;
+  imageUrl?: string;
+  imageFile?: File | null;
+  removeImage?: boolean;
+}
 
 interface FridgeItemFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (item: Omit<FridgeItem, 'id' | 'createdAt'>) => void;
+  onSubmit: (item: FridgeItemFormData) => void;
   initialData?: FridgeItem;
   mode: 'create' | 'edit';
   isSubmitting?: boolean;
@@ -42,8 +53,12 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
   const [category, setCategory] = useState(initialData?.category || '');
   const [location, setLocation] = useState(initialData?.location || '');
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
 
   const nameRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -52,12 +67,18 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
       setExpiryDate(initialData.expiryDate);
       setCategory(initialData.category);
       setLocation(initialData.location);
+      setImageFile(null);
+      setRemoveImage(false);
+      setImagePreview(initialData.imageUrl || null);
     } else {
       setName('');
       setQuantity('1');
       setExpiryDate(new Date().toISOString().split('T')[0]);
       setCategory('');
       setLocation('');
+      setImageFile(null);
+      setImagePreview(null);
+      setRemoveImage(false);
     }
   }, [initialData]);
 
@@ -67,6 +88,25 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
     }
   }, [open]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageFile(file);
+    setRemoveImage(false);
+
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -75,6 +115,9 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
       expiryDate,
       category,
       location,
+      imageFile,
+      removeImage,
+      imageUrl: initialData?.imageUrl,
     });
 
     if (!isSubmitting) {
@@ -83,6 +126,9 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
       setExpiryDate(new Date().toISOString().split('T')[0]);
       setCategory('');
       setLocation('');
+      setImageFile(null);
+      setImagePreview(null);
+      setRemoveImage(false);
       onOpenChange(false);
     }
   };
@@ -139,6 +185,8 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
         style={{
           position: 'relative',
           width: 440,
+          maxHeight: '90vh',
+          overflowY: 'auto',
           background: '#161b22',
           border: '1px solid #30363d',
           boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
@@ -212,6 +260,103 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
                 placeholder="예: 우유, 계란 등"
                 style={inputStyle('name')}
               />
+            </div>
+
+            {/* Image upload */}
+            <div style={{ marginBottom: 10 }}>
+              <label style={labelStyle}>photo</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                disabled={isSubmitting}
+                style={{ display: 'none' }}
+              />
+              {imagePreview && !removeImage ? (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: 6,
+                  background: '#0d1117',
+                  border: '1px solid #30363d',
+                }}>
+                  <img
+                    src={imagePreview}
+                    alt="preview"
+                    style={{
+                      width: 48,
+                      height: 48,
+                      objectFit: 'cover',
+                      border: '1px solid #30363d',
+                    }}
+                  />
+                  <div style={{ flex: 1, ...mono, fontSize: 10, color: '#3fb950' }}>
+                    {imageFile ? imageFile.name : 'uploaded'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                      setImageFile(null);
+                      setImagePreview(null);
+                      handleRemoveImage();
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #30363d',
+                      color: '#f85149',
+                      padding: 4,
+                      cursor: 'pointer',
+                      display: 'flex',
+                    }}
+                  >
+                    <Trash2 style={{ width: 12, height: 12 }} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #30363d',
+                      color: '#58a6ff',
+                      padding: 4,
+                      cursor: 'pointer',
+                      display: 'flex',
+                    }}
+                  >
+                    <Camera style={{ width: 12, height: 12 }} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                  style={{
+                    ...mono,
+                    width: '100%',
+                    background: '#0d1117',
+                    border: '1px dashed #30363d',
+                    color: '#6e7681',
+                    padding: '10px 8px',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    transition: 'border-color 0.15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#58a6ff'; e.currentTarget.style.color = '#58a6ff'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#30363d'; e.currentTarget.style.color = '#6e7681'; }}
+                >
+                  <Camera style={{ width: 14, height: 14 }} />
+                  사진 촬영 / 선택
+                </button>
+              )}
             </div>
 
             {/* Quantity + Expiry row */}

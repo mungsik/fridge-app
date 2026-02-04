@@ -10,6 +10,7 @@ export interface Database {
           category: string;
           location: string;
           user_id: string;
+          image_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -21,6 +22,7 @@ export interface Database {
           category?: string;
           location?: string;
           user_id: string;
+          image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -31,6 +33,7 @@ export interface Database {
           expiry_date?: string;
           category?: string;
           location?: string;
+          image_url?: string | null;
           updated_at?: string;
         };
       };

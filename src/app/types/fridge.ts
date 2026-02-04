@@ -7,6 +7,7 @@ export interface FridgeItem {
   location: string;
   userId: string;
   ownerName?: string;
+  imageUrl?: string;
   createdAt: string;
 }
 

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Input } from '@/app/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { FridgeItemForm } from '@/app/components/FridgeItemForm';
+import { FridgeItemForm, FridgeItemFormData } from '@/app/components/FridgeItemForm';
 import { FridgeItemCard } from '@/app/components/FridgeItemCard';
+import { uploadItemImage, deleteItemImage } from '@/lib/api/imageUpload';
+import { supabase } from '@/lib/supabase';
 import { NotificationBanner } from '@/app/components/NotificationBanner';
 import { AuthForm } from '@/app/components/AuthForm';
 import { useAuth } from '@/app/contexts/AuthContext';
@@ -83,10 +85,24 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   const [viewMode, setViewMode] = useState<'grid' | 'fridge'>('fridge');
   const [isTelegramDialogOpen, setIsTelegramDialogOpen] = useState(false);
 
-  const handleCreate = async (itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
+  const handleCreate = async (formData: FridgeItemFormData) => {
     try {
       setIsSubmitting(true);
-      await createItem(itemData);
+
+      let imageUrl: string | undefined;
+      if (formData.imageFile) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) imageUrl = await uploadItemImage(formData.imageFile, user.id);
+      }
+
+      await createItem({
+        name: formData.name,
+        quantity: formData.quantity,
+        expiryDate: formData.expiryDate,
+        category: formData.category,
+        location: formData.location,
+        imageUrl,
+      });
       toast.success('▶ ITEM SAVED — 인벤토리에 추가됨');
     } catch (err) {
       toast.error('✖ SAVE FAILED — 등록 실패');
@@ -96,12 +112,33 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
     }
   };
 
-  const handleEdit = async (itemData: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'ownerName'>) => {
+  const handleEdit = async (formData: FridgeItemFormData) => {
     if (!editingItem) return;
 
     try {
       setIsSubmitting(true);
-      await updateItem(editingItem.id, itemData);
+
+      let imageUrl = editingItem.imageUrl;
+
+      if (formData.removeImage && imageUrl) {
+        await deleteItemImage(imageUrl);
+        imageUrl = undefined;
+      }
+
+      if (formData.imageFile) {
+        if (imageUrl) await deleteItemImage(imageUrl);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) imageUrl = await uploadItemImage(formData.imageFile, user.id);
+      }
+
+      await updateItem(editingItem.id, {
+        name: formData.name,
+        quantity: formData.quantity,
+        expiryDate: formData.expiryDate,
+        category: formData.category,
+        location: formData.location,
+        imageUrl,
+      });
       setEditingItem(null);
       toast.success('▶ ITEM UPDATED — 수정 완료');
     } catch (err) {
@@ -135,6 +172,7 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
         expiryDate: item.expiryDate,
         category: item.category,
         location: newLocation,
+        imageUrl: item.imageUrl,
       });
     } catch (err) {
       toast.error('✖ MOVE FAILED — 위치 변경 실패');

@@ -13,6 +13,7 @@ function toFridgeItem(row: DbFridgeItem, ownerName?: string): FridgeItem {
     location: row.location,
     userId: row.user_id,
     ownerName,
+    imageUrl: row.image_url || undefined,
     createdAt: row.created_at,
   };
 }
@@ -25,6 +26,7 @@ function toDbFormat(item: Omit<FridgeItem, 'id' | 'createdAt' | 'userId' | 'owne
     expiry_date: item.expiryDate,
     category: item.category || '',
     location: item.location || '',
+    image_url: item.imageUrl || null,
     user_id: userId,
   };
 }
@@ -94,6 +96,7 @@ export const fridgeItemsApi = {
         expiry_date: item.expiryDate,
         category: item.category || '',
         location: item.location || '',
+        image_url: item.imageUrl || null,
       })
       .eq('id', id)
       .select('*')
