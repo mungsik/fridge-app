@@ -1,18 +1,15 @@
 import { useState, useMemo } from 'react';
-import { DndProvider, useDrop } from 'react-dnd';
+import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { FridgeItem } from '@/app/types/fridge';
-import { ZONE_IDS, DND_TYPES, DragItem } from './fridgeConstants';
+import { ZONE_IDS } from './fridgeConstants';
 import { FridgeShell } from './FridgeShell';
 import { FridgeShelf } from './FridgeShelf';
 import { FridgeItemSprite } from './FridgeItemSprite';
 import { ItemPanel } from './ItemPanel';
 import { ItemDetailPopover } from './ItemDetailPopover';
-import { Trash2 } from 'lucide-react';
 import { useAuth } from '@/app/contexts/AuthContext';
-
-const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
 interface FridgeViewProps {
   items: FridgeItem[];
@@ -100,7 +97,6 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
 
   return (
     <DndProvider backend={dndBackend} options={isTouchDevice ? { enableMouseEvents: true } : undefined}>
-      <UnplaceDropZone onDelete={onDelete}>
         <div className="fridge-layout">
           {/* Item panel — order-2 on mobile (below fridge), order-1 on desktop (left) */}
           <div className="fridge-layout-inventory">
@@ -135,8 +131,6 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
             />
           </div>
         </div>
-      </UnplaceDropZone>
-
       <style>{`
         .fridge-layout {
           display: grid;
@@ -171,44 +165,3 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
   );
 }
 
-function UnplaceDropZone({ children, onDelete }: { children: React.ReactNode; onDelete: (id: string) => void }) {
-  const [{ isOver }, drop] = useDrop<DragItem, { handled: boolean }, { isOver: boolean }>({
-    accept: DND_TYPES.FRIDGE_ITEM,
-    drop: (dragItem, monitor) => {
-      if (monitor.didDrop()) return;
-      onDelete(dragItem.id);
-      return { handled: true };
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver({ shallow: true }),
-    }),
-  });
-
-  const showIndicator = isOver;
-
-  return (
-    <div ref={drop as unknown as React.Ref<HTMLDivElement>} className="relative">
-      {children}
-      {showIndicator && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-          <div
-            className="flex items-center gap-3"
-            style={{
-              background: '#0d1117',
-              border: '1px solid #f85149',
-              padding: '10px 20px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-              ...mono,
-              color: '#f85149',
-              fontWeight: 'bold',
-              letterSpacing: 1,
-            }}
-          >
-            <Trash2 className="h-6 w-6" />
-            <span>▶ DROP = DELETE ◀</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
