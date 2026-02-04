@@ -13,13 +13,15 @@ interface ItemPanelDraggableProps {
   onClick?: (item: FridgeItem) => void;
   onDelete?: (id: string) => void;
   isMine?: boolean;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 const SWIPE_THRESHOLD = 50;
 const DELETE_BTN_WIDTH = 48;
 
-export function ItemPanelDraggable({ item, onClick, onDelete, isMine }: ItemPanelDraggableProps) {
+export function ItemPanelDraggable({ item, onClick, onDelete, isMine, isSelected, onSelect }: ItemPanelDraggableProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [swipeX, setSwipeX] = useState(0);
   const [swiped, setSwiped] = useState(false);
@@ -169,23 +171,42 @@ export function ItemPanelDraggable({ item, onClick, onDelete, isMine }: ItemPane
           gap: 4,
         }}
       >
-        {/* Mine badge */}
-        {isMine && (
-          <div style={{
+        {/* Select checkbox — large tap target wrapping small visual box */}
+        <div
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect?.(item.id);
+          }}
+          style={{
             position: 'absolute',
-            top: 2,
-            right: 2,
+            top: 0,
+            right: 0,
+            width: 28,
+            height: 28,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-end',
+            padding: 2,
+            zIndex: 3,
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{
             width: 14,
             height: 14,
-            background: '#3fb950',
+            background: isSelected ? '#f85149' : '#161b22',
+            border: `1px solid ${isSelected ? '#f85149' : '#30363d'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 2,
           }}>
-            <Check style={{ width: 10, height: 10, color: '#0d1117', strokeWidth: 3 }} />
+            {isSelected && <Check style={{ width: 10, height: 10, color: '#fff', strokeWidth: 3 }} />}
           </div>
-        )}
+        </div>
 
         {/* Icon */}
         <div style={{

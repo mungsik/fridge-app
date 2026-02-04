@@ -1,8 +1,9 @@
+import { useState, useCallback } from 'react';
 import { useDrop } from 'react-dnd';
 import { FridgeItem } from '@/app/types/fridge';
 import { DND_TYPES, DragItem } from './fridgeConstants';
 import { ItemPanelDraggable } from './ItemPanelDraggable';
-import { Package, Undo2, Plus } from 'lucide-react';
+import { Package, Undo2, Plus, Trash2 } from 'lucide-react';
 
 interface ItemPanelProps {
   items: FridgeItem[];
@@ -16,6 +17,23 @@ interface ItemPanelProps {
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
 export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, currentUserId }: ItemPanelProps) {
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleBatchDelete = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    selectedIds.forEach(id => onDelete?.(id));
+    setSelectedIds(new Set());
+  }, [selectedIds, onDelete]);
+
   const [{ isOver }, drop] = useDrop({
     accept: DND_TYPES.FRIDGE_ITEM,
     drop: (dragItem: DragItem) => {
@@ -57,10 +75,33 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, curr
         <span style={{ ...mono, fontSize: 12, fontWeight: 'bold', color: '#c9d1d9', letterSpacing: 1 }}>
           INVENTORY
         </span>
+        {selectedIds.size > 0 && (
+          <button
+            onClick={handleBatchDelete}
+            style={{
+              ...mono,
+              marginLeft: 'auto',
+              background: '#1a0e0e',
+              border: '1px solid #f85149',
+              color: '#f85149',
+              padding: '2px 8px',
+              fontSize: 11,
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              letterSpacing: 1,
+            }}
+          >
+            <Trash2 style={{ width: 10, height: 10 }} />
+            /rm ({selectedIds.size})
+          </button>
+        )}
         <span
           style={{
             ...mono,
-            marginLeft: 'auto',
+            marginLeft: selectedIds.size > 0 ? 0 : 'auto',
             fontSize: 11,
             color: '#58a6ff',
             background: '#0d1117',
@@ -106,7 +147,7 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, curr
             }}
           >
             {items.map(item => (
-              <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} onDelete={onDelete} isMine={!!currentUserId && item.userId === currentUserId} />
+              <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} onDelete={onDelete} isMine={!!currentUserId && item.userId === currentUserId} isSelected={selectedIds.has(item.id)} onSelect={toggleSelect} />
             ))}
           </div>
         )}
