@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Check } from 'lucide-react';
 import { FridgeItem, NotificationStatus } from '@/app/types/fridge';
 import { differenceInDays } from 'date-fns';
 
@@ -7,6 +7,7 @@ interface FridgeItemCardProps {
   onEdit: (item: FridgeItem) => void;
   onDelete: (id: string) => void;
   isAdmin?: boolean;
+  isMine?: boolean;
 }
 
 const mono: React.CSSProperties = {
@@ -26,7 +27,7 @@ const tc = {
   yellow: '#d29922',
 };
 
-export function FridgeItemCard({ item, onEdit, onDelete, isAdmin }: FridgeItemCardProps) {
+export function FridgeItemCard({ item, onEdit, onDelete, isAdmin, isMine }: FridgeItemCardProps) {
   const getExpiryStatus = (): NotificationStatus => {
     const today = new Date();
     const expiry = new Date(item.expiryDate);
@@ -48,7 +49,8 @@ export function FridgeItemCard({ item, onEdit, onDelete, isAdmin }: FridgeItemCa
       style={{
         ...mono,
         background: tc.surface,
-        border: `1px solid ${tc.border}`,
+        border: `1px solid ${isMine ? tc.green : tc.border}`,
+        boxShadow: isMine ? '0 0 6px rgba(63, 185, 80, 0.3)' : 'none',
         fontSize: 13,
       }}
     >
@@ -61,6 +63,19 @@ export function FridgeItemCard({ item, onEdit, onDelete, isAdmin }: FridgeItemCa
         gap: 8,
       }}>
         <span style={{ color: statusColor }}>●</span>
+        {isMine && (
+          <span style={{
+            width: 16,
+            height: 16,
+            background: tc.green,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <Check style={{ width: 10, height: 10, color: tc.bg, strokeWidth: 3 }} />
+          </span>
+        )}
         <span style={{ color: tc.text, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {item.name}
         </span>

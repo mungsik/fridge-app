@@ -67,7 +67,7 @@ export default function App() {
 }
 
 function MainApp({ username, signOut, isAdmin }: { username: string | null; signOut: () => Promise<void>; isAdmin: boolean }) {
-  const { telegramChatId } = useAuth();
+  const { user, telegramChatId } = useAuth();
   const {
     items,
     isLoading,
@@ -151,6 +151,11 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   };
 
   const handleDelete = async (id: string) => {
+    const item = items.find(i => i.id === id);
+    if (item && !isAdmin && item.userId !== user?.id) {
+      toast.error('✖ PERMISSION DENIED — 다른 사용자의 아이템은 삭제할 수 없습니다');
+      return;
+    }
     try {
       await deleteItem(id);
       toast.success('▶ ITEM DELETED — 삭제 완료');
@@ -161,11 +166,19 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
   };
 
   const openEditForm = (item: FridgeItem) => {
+    if (!isAdmin && item.userId !== user?.id) {
+      toast.error('✖ PERMISSION DENIED — 다른 사용자의 아이템은 수정할 수 없습니다');
+      return;
+    }
     setEditingItem(item);
     setIsFormOpen(true);
   };
 
   const handleUpdateLocation = async (item: FridgeItem, newLocation: string) => {
+    if (!isAdmin && item.userId !== user?.id) {
+      toast.error('✖ PERMISSION DENIED — 다른 사용자의 아이템은 이동할 수 없습니다');
+      return;
+    }
     try {
       await updateItem(item.id, {
         name: item.name,
@@ -474,6 +487,7 @@ function MainApp({ username, signOut, isAdmin }: { username: string | null; sign
                   onEdit={openEditForm}
                   onDelete={handleDelete}
                   isAdmin={isAdmin}
+                  isMine={item.userId === user?.id}
                 />
               ))}
             </div>

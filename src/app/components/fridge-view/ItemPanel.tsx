@@ -10,11 +10,12 @@ interface ItemPanelProps {
   onItemClick?: (item: FridgeItem) => void;
   onAdd?: () => void;
   onDelete?: (id: string) => void;
+  currentUserId?: string;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
-export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete }: ItemPanelProps) {
+export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, currentUserId }: ItemPanelProps) {
   const [{ isOver }, drop] = useDrop({
     accept: DND_TYPES.FRIDGE_ITEM,
     drop: (dragItem: DragItem) => {
@@ -28,18 +29,20 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete }: It
     }),
   });
 
+
   return (
     <div
       ref={drop as unknown as React.Ref<HTMLDivElement>}
-      className="w-[260px] transition-colors"
+      className="transition-colors"
       style={{
+        width: '100%',
         background: isOver ? '#1a2030' : '#161b22',
         border: '1px solid #30363d',
         imageRendering: 'pixelated',
         padding: 0,
       }}
     >
-      {/* 헤더 */}
+      {/* Header */}
       <div
         style={{
           background: '#0d1117',
@@ -70,12 +73,12 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete }: It
         </span>
       </div>
 
-      {/* 구분선 */}
+      {/* Divider */}
       <div style={{ padding: '0 10px' }}>
         <div style={{ borderBottom: '1px dashed #30363d' }} />
       </div>
 
-      {/* 콘텐츠 */}
+      {/* Content */}
       <div style={{ padding: 8 }}>
         {isOver ? (
           <div style={{ textAlign: 'center', padding: '20px 0', color: '#58a6ff' }}>
@@ -93,9 +96,17 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete }: It
             <p style={{ marginTop: 4, fontSize: 10 }}>모든 아이템이 냉장고에 있습니다</p>
           </div>
         ) : (
-          <div className="space-y-1 max-h-[480px] overflow-y-auto">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(6, 1fr)',
+              gap: 6,
+              maxHeight: 520,
+              overflowY: 'auto',
+            }}
+          >
             {items.map(item => (
-              <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} onDelete={onDelete} />
+              <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} onDelete={onDelete} isMine={!!currentUserId && item.userId === currentUserId} />
             ))}
           </div>
         )}
@@ -138,7 +149,7 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete }: It
         </div>
       )}
 
-      {/* 구분선 + 푸터 */}
+      {/* Footer */}
       <div style={{ padding: '0 10px' }}>
         <div style={{ borderBottom: '1px dashed #30363d' }} />
       </div>

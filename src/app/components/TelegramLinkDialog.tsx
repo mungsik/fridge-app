@@ -123,15 +123,15 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
     background: '#0d1117',
     border: '1px solid #30363d',
     color: '#c9d1d9',
-    padding: '8px 14px',
-    fontSize: 11,
+    padding: '10px 16px',
+    fontSize: 14,
     fontWeight: 'bold',
     cursor: 'pointer',
     letterSpacing: 1,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     transition: 'all 0.15s',
   };
 
@@ -145,7 +145,7 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
         onClick={(e) => e.stopPropagation()}
         style={{
           position: 'relative',
-          width: 340,
+          width: 440,
           background: '#161b22',
           border: '1px solid #30363d',
           boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
@@ -155,14 +155,14 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
         {/* Title bar */}
         <div style={{
           background: '#0d1117',
-          padding: '6px 12px',
+          padding: '8px 14px',
           borderBottom: '1px solid #30363d',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
           <span style={{
-            ...mono, fontSize: 11, fontWeight: 'bold',
+            ...mono, fontSize: 14, fontWeight: 'bold',
             color: '#58a6ff', letterSpacing: 1,
           }}>
             ┌── TELEGRAM ──┐
@@ -178,45 +178,45 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
               display: 'flex',
             }}
           >
-            <X style={{ width: 14, height: 14 }} />
+            <X style={{ width: 16, height: 16 }} />
           </button>
         </div>
 
         {/* Command prompt */}
         <div style={{
-          padding: '8px 12px',
+          padding: '10px 14px',
           borderBottom: '1px solid #21262d',
         }}>
-          <span style={{ ...mono, fontSize: 10, color: '#3fb950' }}>
+          <span style={{ ...mono, fontSize: 13, color: '#3fb950' }}>
             user@fridge:~$
           </span>
-          <span style={{ ...mono, fontSize: 10, color: '#c9d1d9', marginLeft: 6 }}>
+          <span style={{ ...mono, fontSize: 13, color: '#c9d1d9', marginLeft: 6 }}>
             /telegram {isLinked ? '--status' : '--link'}
           </span>
           <span style={{
-            ...mono, fontSize: 10, color: '#3fb950',
+            ...mono, fontSize: 13, color: '#3fb950',
             animation: 'blink 1s step-end infinite',
           }}>
             _
           </span>
         </div>
 
-        <div style={{ padding: 12 }}>
+        <div style={{ padding: 16 }}>
           {isLinked ? (
             <>
               {/* Linked status */}
               <div style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '8px 10px', marginBottom: 10,
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', marginBottom: 12,
                 background: '#0d1117', border: '1px solid #3fb950',
               }}>
-                <CheckCircle2 style={{ width: 16, height: 16, color: '#3fb950', flexShrink: 0 }} />
-                <span style={{ ...mono, fontSize: 11, fontWeight: 'bold', color: '#3fb950' }}>
+                <CheckCircle2 style={{ width: 18, height: 18, color: '#3fb950', flexShrink: 0 }} />
+                <span style={{ ...mono, fontSize: 14, fontWeight: 'bold', color: '#3fb950' }}>
                   STATUS: LINKED
                 </span>
               </div>
 
-              <div style={{ ...mono, fontSize: 10, color: '#6e7681', marginBottom: 12, lineHeight: 1.8 }}>
+              <div style={{ ...mono, fontSize: 13, color: '#6e7681', marginBottom: 14, lineHeight: 1.8 }}>
                 <div>매일 오전 9시에 만료 예정 식품 알림을 받습니다.</div>
               </div>
 
@@ -232,14 +232,14 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <Unlink style={{ width: 12, height: 12 }} />
+                <Unlink style={{ width: 14, height: 14 }} />
                 /unlink
               </button>
             </>
           ) : !linkCode ? (
             <>
               {/* Instructions */}
-              <div style={{ ...mono, fontSize: 10, color: '#c9d1d9', marginBottom: 12, lineHeight: 2 }}>
+              <div style={{ ...mono, fontSize: 13, color: '#c9d1d9', marginBottom: 14, lineHeight: 2 }}>
                 <div><span style={{ color: '#58a6ff' }}>1.</span> 연동 코드 생성</div>
                 <div><span style={{ color: '#58a6ff' }}>2.</span> 텔레그램 봇에서 코드 전송</div>
                 <div><span style={{ color: '#58a6ff' }}>3.</span> 자동 연동 완료</div>
@@ -262,7 +262,7 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
               >
                 {isGenerating ? (
                   <>
-                    <Loader2 style={{ width: 12, height: 12, animation: 'spin 1s linear infinite' }} />
+                    <Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} />
                     generating...
                   </>
                 ) : (
@@ -273,21 +273,21 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
           ) : (
             <>
               {/* Code display */}
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ ...mono, fontSize: 9, color: '#6e7681', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' }}>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ ...mono, fontSize: 12, color: '#6e7681', letterSpacing: 1, marginBottom: 6, textTransform: 'uppercase' }}>
                   link code
                 </div>
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  display: 'flex', alignItems: 'center', gap: 8,
                 }}>
                   <div style={{
                     flex: 1,
                     background: '#0d1117',
                     border: '1px solid #58a6ff',
-                    padding: '8px 12px',
+                    padding: '10px 14px',
                     textAlign: 'center',
                   }}>
-                    <span style={{ ...mono, fontSize: 18, fontWeight: 'bold', color: '#58a6ff', letterSpacing: 4 }}>
+                    <span style={{ ...mono, fontSize: 22, fontWeight: 'bold', color: '#58a6ff', letterSpacing: 4 }}>
                       {linkCode}
                     </span>
                   </div>
@@ -300,19 +300,19 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
                       background: '#0d1117',
                       border: '1px solid #30363d',
                       color: '#6e7681',
-                      padding: 8,
+                      padding: 10,
                       cursor: 'pointer',
                       display: 'flex',
                     }}
                   >
-                    <Copy style={{ width: 14, height: 14 }} />
+                    <Copy style={{ width: 16, height: 16 }} />
                   </button>
                 </div>
               </div>
 
               {/* Open bot button */}
               <button
-                style={{ ...btnStyle, borderColor: '#58a6ff', color: '#58a6ff', marginBottom: 8 }}
+                style={{ ...btnStyle, borderColor: '#58a6ff', color: '#58a6ff', marginBottom: 10 }}
                 onClick={() => window.open(botLink, '_blank')}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = '#0d1a2d';
@@ -323,19 +323,19 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <ExternalLink style={{ width: 12, height: 12 }} />
+                <ExternalLink style={{ width: 14, height: 14 }} />
                 /open-bot
               </button>
 
               {/* Polling status */}
               {isPolling && (
                 <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '8px 10px', marginBottom: 8,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 12px', marginBottom: 10,
                   background: '#0d1117', border: '1px solid #d29922',
                 }}>
-                  <Loader2 style={{ width: 14, height: 14, color: '#d29922', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
-                  <span style={{ ...mono, fontSize: 10, color: '#d29922' }}>
+                  <Loader2 style={{ width: 16, height: 16, color: '#d29922', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+                  <span style={{ ...mono, fontSize: 13, color: '#d29922' }}>
                     waiting for bot response...
                   </span>
                 </div>
@@ -364,10 +364,10 @@ export function TelegramLinkDialog({ open, onOpenChange }: TelegramLinkDialogPro
         <div style={{
           background: '#0d1117',
           borderTop: '1px solid #30363d',
-          padding: '4px 12px',
+          padding: '6px 14px',
           textAlign: 'center',
         }}>
-          <span style={{ ...mono, fontSize: 9, color: '#30363d', letterSpacing: 2 }}>
+          <span style={{ ...mono, fontSize: 11, color: '#30363d', letterSpacing: 2 }}>
             {'─'.repeat(20)}
           </span>
         </div>

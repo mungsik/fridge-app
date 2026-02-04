@@ -269,7 +269,6 @@ export function FridgeItemForm({ open, onOpenChange, onSubmit, initialData, mode
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleFileChange}
                 disabled={isSubmitting}
                 style={{ display: 'none' }}

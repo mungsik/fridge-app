@@ -9,6 +9,7 @@ import { FridgeItemSprite } from './FridgeItemSprite';
 import { ItemPanel } from './ItemPanel';
 import { ItemDetailPopover } from './ItemDetailPopover';
 import { Trash2 } from 'lucide-react';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
@@ -22,6 +23,7 @@ interface FridgeViewProps {
 }
 
 export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }: FridgeViewProps) {
+  const { user } = useAuth();
   const [selectedItem, setSelectedItem] = useState<FridgeItem | null>(null);
   const [openZones, setOpenZones] = useState<Set<string>>(new Set());
 
@@ -41,8 +43,18 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
       }
     }
 
+    // Sort unplaced: own items first
+    const currentUserId = user?.id;
+    if (currentUserId) {
+      unplaced.sort((a, b) => {
+        const aIsMine = a.userId === currentUserId ? 0 : 1;
+        const bIsMine = b.userId === currentUserId ? 0 : 1;
+        return aIsMine - bIsMine;
+      });
+    }
+
     return { placedItems: placed, unplacedItems: unplaced };
-  }, [items]);
+  }, [items, user?.id]);
 
   const handleDrop = (itemId: string, targetZone: string) => {
     const item = items.find(i => i.id === itemId);
@@ -85,11 +97,11 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
   return (
     <DndProvider backend={HTML5Backend}>
       <UnplaceDropZone onDelete={onDelete}>
-        <div className="flex gap-6 justify-center items-start">
-          {/* Item panel (left) */}
-          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 0.3fr', gap: 24, alignItems: 'start' }}>
+          {/* Item panel (left, fills remaining space) */}
+          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} currentUserId={user?.id} />
 
-          {/* Fridge (center) */}
+          {/* Fridge (right, fixed size) */}
           <FridgeShell
             openZones={openZones}
             onZoneClick={handleZoneClick}

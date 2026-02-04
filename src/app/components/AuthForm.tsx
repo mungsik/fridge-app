@@ -70,8 +70,8 @@ export function AuthForm() {
     background: '#0d1117',
     border: `1px solid ${focusedField === field ? '#58a6ff' : '#30363d'}`,
     color: '#c9d1d9',
-    padding: '8px 10px',
-    fontSize: 13,
+    padding: '10px 12px',
+    fontSize: 17,
     outline: 'none',
     borderRadius: 0,
     transition: 'border-color 0.15s',
@@ -79,7 +79,7 @@ export function AuthForm() {
 
   const labelStyle: React.CSSProperties = {
     ...mono,
-    fontSize: 10,
+    fontSize: 13,
     color: '#6e7681',
     letterSpacing: 1,
     marginBottom: 4,
@@ -93,7 +93,7 @@ export function AuthForm() {
       style={{ background: '#0d1117' }}
     >
       <div style={{
-        width: 360,
+        width: 440,
         background: '#161b22',
         border: '1px solid #30363d',
         boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
@@ -107,7 +107,7 @@ export function AuthForm() {
           textAlign: 'center',
         }}>
           <span style={{
-            ...mono, fontSize: 11, fontWeight: 'bold',
+            ...mono, fontSize: 14, fontWeight: 'bold',
             color: '#58a6ff', letterSpacing: 1,
           }}>
             ┌── NAENGBOO AUTH ──┐
@@ -120,13 +120,13 @@ export function AuthForm() {
           borderBottom: '1px solid #21262d',
           lineHeight: 1.8,
         }}>
-          <div style={{ ...mono, fontSize: 10, color: '#6e7681' }}>
+          <div style={{ ...mono, fontSize: 15, color: '#6e7681' }}>
             $ ssh fridge@naengboo.app
           </div>
-          <div style={{ ...mono, fontSize: 10, color: '#3fb950' }}>
+          <div style={{ ...mono, fontSize: 15, color: '#3fb950' }}>
             ✓ connection established
           </div>
-          <div style={{ ...mono, fontSize: 10, color: '#d29922' }}>
+          <div style={{ ...mono, fontSize: 15, color: '#d29922' }}>
             {isSignUp ? '? new user detected — register below' : '? authentication required'}
           </div>
         </div>
@@ -136,14 +136,14 @@ export function AuthForm() {
           padding: '8px 14px',
           borderBottom: '1px solid #21262d',
         }}>
-          <span style={{ ...mono, fontSize: 10, color: '#3fb950' }}>
+          <span style={{ ...mono, fontSize: 15, color: '#3fb950' }}>
             guest@fridge:~$
           </span>
-          <span style={{ ...mono, fontSize: 10, color: '#c9d1d9', marginLeft: 6 }}>
+          <span style={{ ...mono, fontSize: 15, color: '#c9d1d9', marginLeft: 6 }}>
             {isSignUp ? '/register' : '/login'}
           </span>
           <span style={{
-            ...mono, fontSize: 10, color: '#3fb950',
+            ...mono, fontSize: 15, color: '#3fb950',
             animation: 'blink 1s step-end infinite',
           }}>
             _
@@ -217,8 +217,8 @@ export function AuthForm() {
                 background: isLoading ? '#161b22' : '#0d1117',
                 border: `1px solid ${isLoading ? '#30363d' : '#3fb950'}`,
                 color: isLoading ? '#6e7681' : '#3fb950',
-                padding: '9px 16px',
-                fontSize: 12,
+                padding: '11px 16px',
+                fontSize: 16,
                 fontWeight: 'bold',
                 cursor: isLoading ? 'not-allowed' : 'pointer',
                 letterSpacing: 1,
@@ -258,7 +258,7 @@ export function AuthForm() {
           padding: '10px 14px',
           textAlign: 'center',
         }}>
-          <span style={{ ...mono, fontSize: 10, color: '#6e7681' }}>
+          <span style={{ ...mono, fontSize: 15, color: '#6e7681' }}>
             {isSignUp ? '이미 계정이 있으신가요?' : '계정이 없으신가요?'}
           </span>
           <button
@@ -272,7 +272,7 @@ export function AuthForm() {
               background: 'transparent',
               border: 'none',
               color: '#58a6ff',
-              fontSize: 10,
+              fontSize: 15,
               cursor: 'pointer',
               marginLeft: 6,
               textDecoration: 'underline',
