@@ -12,12 +12,11 @@ interface ItemPanelProps {
   onAdd?: () => void;
   onDelete?: (id: string) => void;
   currentUserId?: string;
-  isMobile?: boolean;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
-export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, currentUserId, isMobile }: ItemPanelProps) {
+export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, currentUserId }: ItemPanelProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSelect = useCallback((id: string) => {
@@ -138,15 +137,7 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, curr
             <p style={{ marginTop: 4, fontSize: 10 }}>모든 아이템이 냉장고에 있습니다</p>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(6, 1fr)',
-              gap: 6,
-              maxHeight: 520,
-              overflowY: 'auto',
-            }}
-          >
+          <div className="inventory-grid">
             {items.map(item => (
               <ItemPanelDraggable key={item.id} item={item} onClick={onItemClick} onDelete={onDelete} isMine={!!currentUserId && item.userId === currentUserId} isSelected={selectedIds.has(item.id)} onSelect={toggleSelect} />
             ))}
@@ -200,6 +191,21 @@ export function ItemPanel({ items, onUnplace, onItemClick, onAdd, onDelete, curr
           DRAG → FRIDGE
         </p>
       </div>
+
+      <style>{`
+        .inventory-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
+          max-height: 520px;
+          overflow-y: auto;
+        }
+        @media (min-width: 768px) {
+          .inventory-grid {
+            grid-template-columns: repeat(6, 1fr);
+          }
+        }
+      `}</style>
     </div>
   );
 }

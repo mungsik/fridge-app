@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -14,16 +14,6 @@ import { useAuth } from '@/app/contexts/AuthContext';
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return isMobile;
-}
-
 interface FridgeViewProps {
   items: FridgeItem[];
   onEdit: (item: FridgeItem) => void;
@@ -35,7 +25,6 @@ interface FridgeViewProps {
 
 export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }: FridgeViewProps) {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
   const [selectedItem, setSelectedItem] = useState<FridgeItem | null>(null);
   const [openZones, setOpenZones] = useState<Set<string>>(new Set());
 
@@ -112,46 +101,14 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
   return (
     <DndProvider backend={dndBackend} options={isTouchDevice ? { enableMouseEvents: true } : undefined}>
       <UnplaceDropZone onDelete={onDelete}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr auto 0.3fr',
-          gap: isMobile ? 16 : 24,
-          alignItems: 'start',
-        }}>
-          {/* Fridge - on mobile, show first */}
-          {isMobile && (
-            <FridgeShell
-              openZones={openZones}
-              onZoneClick={handleZoneClick}
-              isMobile={isMobile}
-              fridgeContent={
-                <FridgeShelf zoneId="fridge" onDrop={handleDrop}>
-                  {renderShelfItems('fridge')}
-                </FridgeShelf>
-              }
-              fridgeDoorContent={
-                <FridgeShelf zoneId="fridge-door" onDrop={handleDrop}>
-                  {renderShelfItems('fridge-door')}
-                </FridgeShelf>
-              }
-              freezerContent={
-                <FridgeShelf zoneId="freezer" onDrop={handleDrop}>
-                  {renderShelfItems('freezer')}
-                </FridgeShelf>
-              }
-              freezerDoorContent={
-                <FridgeShelf zoneId="freezer-door" onDrop={handleDrop}>
-                  {renderShelfItems('freezer-door')}
-                </FridgeShelf>
-              }
-            />
-          )}
+        <div className="fridge-layout">
+          {/* Item panel — order-2 on mobile (below fridge), order-1 on desktop (left) */}
+          <div className="fridge-layout-inventory">
+            <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} currentUserId={user?.id} />
+          </div>
 
-          {/* Item panel */}
-          <ItemPanel items={unplacedItems} onUnplace={handleUnplace} onItemClick={setSelectedItem} onAdd={onAdd} onDelete={onDelete} currentUserId={user?.id} isMobile={isMobile} />
-
-          {/* Fridge - desktop only */}
-          {!isMobile && (
+          {/* Fridge — order-1 on mobile (top), order-2 on desktop (right) */}
+          <div className="fridge-layout-fridge">
             <FridgeShell
               openZones={openZones}
               onZoneClick={handleZoneClick}
@@ -176,9 +133,29 @@ export function FridgeView({ items, onEdit, onDelete, onUpdateLocation, onAdd }:
                 </FridgeShelf>
               }
             />
-          )}
+          </div>
         </div>
       </UnplaceDropZone>
+
+      <style>{`
+        .fridge-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+          align-items: start;
+        }
+        .fridge-layout-inventory { order: 2; }
+        .fridge-layout-fridge { order: 1; }
+
+        @media (min-width: 768px) {
+          .fridge-layout {
+            grid-template-columns: 1fr 280px;
+            gap: 24px;
+          }
+          .fridge-layout-inventory { order: 1; }
+          .fridge-layout-fridge { order: 2; }
+        }
+      `}</style>
 
       {/* Detail popover */}
       {selectedItem && (

@@ -8,7 +8,6 @@ interface FridgeShellProps {
   freezerDoorContent: ReactNode;
   openZones: Set<string>;
   onZoneClick: (zone: string) => void;
-  isMobile?: boolean;
 }
 
 const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
@@ -20,12 +19,11 @@ export function FridgeShell({
   freezerDoorContent,
   openZones,
   onZoneClick,
-  isMobile,
 }: FridgeShellProps) {
   const fridgeOpen = openZones.has('fridge');
   const freezerOpen = openZones.has('freezer');
 
-  const W = isMobile ? '100%' : 280;
+  const W = '100%';
   const freezerH = 204;
   const dividerTop = freezerH;
   const fridgeTop = freezerH + 6;
