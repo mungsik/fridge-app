@@ -18,6 +18,7 @@ const mono = { fontFamily: '"JetBrains Mono", "Courier New", monospace' };
 
 export function ItemDetailPopover({ item, onEdit, onDelete, onRemoveFromFridge, onClose }: ItemDetailPopoverProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   useEffect(() => {
     if (item.imageUrl) {
@@ -86,11 +87,15 @@ export function ItemDetailPopover({ item, onEdit, onDelete, onRemoveFromFridge, 
         <div style={{ padding: 16 }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-            <div style={{
-              background: '#0d1117',
-              border: '1px solid #30363d',
-              padding: 4,
-            }}>
+            <div
+              onClick={() => imageUrl && setShowFullImage(true)}
+              style={{
+                background: '#0d1117',
+                border: '1px solid #30363d',
+                padding: 4,
+                cursor: imageUrl ? 'zoom-in' : 'default',
+              }}
+            >
               {imageUrl ? (
                 <img src={imageUrl} alt={item.name} width={48} height={48} style={{
                   objectFit: 'cover',
@@ -163,6 +168,42 @@ export function ItemDetailPopover({ item, onEdit, onDelete, onRemoveFromFridge, 
           </div>
         </div>
       </div>
+
+      {/* Fullscreen image viewer */}
+      {showFullImage && imageUrl && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          onClick={() => setShowFullImage(false)}
+          style={{ cursor: 'zoom-out' }}
+        >
+          <div className="absolute inset-0 bg-black/85" />
+          <img
+            src={imageUrl}
+            alt={item.name}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              objectFit: 'contain',
+              border: '2px solid #30363d',
+              cursor: 'default',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 40,
+              ...mono,
+              fontSize: 13,
+              color: '#6e7681',
+              letterSpacing: 1,
+            }}
+          >
+            {item.name} — tap anywhere to close
+          </div>
+        </div>
+      )}
     </div>
   );
 }
