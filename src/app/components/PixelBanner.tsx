@@ -1,45 +1,140 @@
 import React from 'react';
 
+const ROWS = 7;
+const PIXEL = 10;
+const GAP = 2;
+const CHAR_GAP = 5;
+const WORD_GAP = 18;
+const LINE_GAP = 14;
+const COLOR = '#d4806a';
+const BORDER_COLOR = '#9e5040';
+
+// 7-row tall, 2-block-wide stroke font
 const FONT: Record<string, string[]> = {
-  'T': ['#####', '  #  ', '  #  ', '  #  ', '  #  '],
-  '3': ['#### ', '    #', ' ### ', '    #', '#### '],
-  'Q': [' ### ', '#   #', '#   #', '# ## ', ' ## #'],
-  'A': [' ### ', '#   #', '#####', '#   #', '#   #'],
-  'I': ['###', ' # ', ' # ', ' # ', '###'],
-  'L': ['#    ', '#    ', '#    ', '#    ', '#####'],
-  'B': ['#### ', '#   #', '#### ', '#   #', '#### '],
-  'S': [' ####', '#    ', ' ### ', '    #', '#### '],
-  ' ': ['  ', '  ', '  ', '  ', '  '],
+  'T': [
+    '#######',
+    '#######',
+    '  ###  ',
+    '  ###  ',
+    '  ###  ',
+    '  ###  ',
+    '  ###  ',
+  ],
+  '3': [
+    '###### ',
+    '#######',
+    '     ##',
+    '  #### ',
+    '     ##',
+    '#######',
+    '###### ',
+  ],
+  'Q': [
+    ' ##### ',
+    '#######',
+    '##   ##',
+    '##   ##',
+    '## ####',
+    '#######',
+    ' ### ##',
+  ],
+  'A': [
+    ' ##### ',
+    '#######',
+    '##   ##',
+    '#######',
+    '#######',
+    '##   ##',
+    '##   ##',
+  ],
+  'I': [
+    '#####',
+    '#####',
+    ' ### ',
+    ' ### ',
+    ' ### ',
+    '#####',
+    '#####',
+  ],
+  'L': [
+    '##     ',
+    '##     ',
+    '##     ',
+    '##     ',
+    '##     ',
+    '#######',
+    '#######',
+  ],
+  'B': [
+    '###### ',
+    '#######',
+    '##  ###',
+    '###### ',
+    '##  ###',
+    '#######',
+    '###### ',
+  ],
+  'S': [
+    ' ######',
+    '#######',
+    '##     ',
+    ' ##### ',
+    '     ##',
+    '#######',
+    '###### ',
+  ],
 };
 
-function buildPixelGrid(text: string): boolean[][] {
-  const rows = 5;
-  const result: boolean[][] = Array.from({ length: rows }, () => []);
-
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i].toUpperCase();
-    const glyph = FONT[ch] || FONT[' '];
-
-    if (i > 0) {
-      for (let r = 0; r < rows; r++) result[r].push(false);
-    }
-
-    for (let r = 0; r < rows; r++) {
-      for (const pixel of glyph[r]) {
-        result[r].push(pixel === '#');
-      }
-    }
+function PixelBlock({ filled }: { filled: boolean }) {
+  if (!filled) {
+    return <div style={{ width: PIXEL, height: PIXEL, flexShrink: 0 }} />;
   }
 
-  return result;
+  return (
+    <div
+      style={{
+        width: PIXEL,
+        height: PIXEL,
+        background: COLOR,
+        border: `1px solid ${BORDER_COLOR}`,
+        backgroundImage:
+          `linear-gradient(to right, transparent calc(50% - 0.5px), rgba(0,0,0,0.15) calc(50% - 0.5px), rgba(0,0,0,0.15) calc(50% + 0.5px), transparent calc(50% + 0.5px)), ` +
+          `linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(0,0,0,0.15) calc(50% - 0.5px), rgba(0,0,0,0.15) calc(50% + 0.5px), transparent calc(50% + 0.5px))`,
+        flexShrink: 0,
+      }}
+    />
+  );
 }
 
-const COLOR = '#d4806a';
-const PIXEL = 8;
-const GAP = 2;
+function PixelChar({ char }: { char: string }) {
+  const glyph = FONT[char.toUpperCase()];
+  if (!glyph) return null;
+
+  return (
+    <div>
+      {glyph.map((row, r) => (
+        <div key={r} style={{ display: 'flex', gap: GAP, marginBottom: r < ROWS - 1 ? GAP : 0 }}>
+          {row.split('').map((ch, c) => (
+            <PixelBlock key={c} filled={ch === '#'} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PixelWord({ word }: { word: string }) {
+  return (
+    <div style={{ display: 'flex', gap: CHAR_GAP, alignItems: 'flex-end' }}>
+      {word.split('').map((char, i) => (
+        <PixelChar key={i} char={char} />
+      ))}
+    </div>
+  );
+}
 
 export function PixelBanner() {
-  const lines = [buildPixelGrid('T3Q'), buildPixelGrid('AI LABS')];
+  const lines = ['T3Q', 'AI LABS'];
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -65,28 +160,23 @@ export function PixelBanner() {
 
       {/* Pixel art text */}
       <div style={{ overflowX: 'auto' }}>
-        {lines.map((grid, li) => (
-          <div key={li} style={{ marginBottom: GAP * 4 }}>
-            {grid.map((row, r) => (
-              <div key={r} style={{ display: 'flex', gap: GAP, marginBottom: GAP }}>
-                {row.map((filled, c) => (
-                  <div
-                    key={c}
-                    style={{
-                      width: PIXEL,
-                      height: PIXEL,
-                      background: filled ? COLOR : 'transparent',
-                      boxShadow: filled
-                        ? 'inset 0 0 0 1px rgba(0,0,0,0.2)'
-                        : 'none',
-                      flexShrink: 0,
-                    }}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        ))}
+        {lines.map((line, li) => {
+          const words = line.split(' ');
+          return (
+            <div
+              key={li}
+              style={{
+                display: 'flex',
+                gap: WORD_GAP,
+                marginBottom: li < lines.length - 1 ? LINE_GAP : 0,
+              }}
+            >
+              {words.map((word, wi) => (
+                <PixelWord key={wi} word={word} />
+              ))}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
